@@ -1,0 +1,13 @@
+---
+# tasks file for apache2
+- name: Install Apache2 package
+  apt:
+    name: apache2
+    state: installed
+
+- name: Copying template file for Apache2 service for REPLICA
+  copy: src=files/000-default.conf dest=/etc/apache2/sites-enabled/000-default.conf owner=root group=root mode=0644
+  copy: src=files/000-default-replica.conf dest=/etc/apache2/sites-enabled/000-default-replica.conf owner=root group=root mode=0644
+
+- name: Reconfiguring template file for Apache2 service for REPLICA
+  linefile: dest=/etc/apache2/sites-enabled/000-default.conf regexp="^ServerName replica12.enlightedinc.info" line=

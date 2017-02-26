@@ -1,0 +1,76 @@
+#/bin/bash -x
+
+# usage: /etc/nagios/bin/last_walSync_fix EM-<id> $SERVICESTATE$
+
+if [ "$2" = "OK" ]; then
+  exit
+fi
+
+EMID=`echo $1 | sed -e s/^EM-//`
+LINE=`cat /tmp/all_em.txt | grep ^${EMID}`
+RHOST=`echo $LINE | awk -F '|' '{print $15}'`
+RDB=`echo $LINE | awk -F '|' '{print $16}'`
+LCA=`echo $LINE | awk -F '|' '{print $5}'`
+LSST=`echo $LINE | awk -F '|' '{print $8}'`
+
+HOURAGO=`/bin/date --date="1 hour ago" +%s`
+TWOHOURAGO=`/bin/date --date="2 hour ago" +%s`
+DAYAGO=`/bin/date --date="1 day ago" +%s`
+WEEKAGO=`/bin/date --date="1 week ago" +%s`
+if perl -e 'exit ((localtime)[8])' ; then
+  DST=28800
+else
+  DST=27360
+fi
+
+LCA=`/bin/date --date="${LCA}" +%s`
+LCA=`expr ${LCA} - ${DST}` # convert to PST
+
+TS=`/bin/date --date="${LSST}" +%s`
+TS=`expr ${TS} - ${DST}` # convert to PST
+
+if [ "$RHOST" = "replica1.enlightedcloud.net" ]; then
+  host=192.168.0.20
+elif [ "$RHOST" = "replica2.enlightedcloud.net" ]; then
+  host=192.168.0.21
+elif [ "$RHOST" = "replica3.enlightedcloud.net" ]; then
+  host=192.168.0.22
+elif [ "$RHOST" = "replica4.enlightedcloud.net" ]; then
+  host=192.168.0.23
+elif [ "$RHOST" = "replica5.enlightedcloud.net" ]; then
+  host=192.168.0.24
+elif [ "$RHOST" = "replica6.enlightedcloud.net" ]; then
+  host=192.168.0.25
+elif [ "$RHOST" = "replica7.enlightedcloud.net" ]; then
+  host=192.168.0.26
+elif [ "$RHOST" = "replica8.enlightedcloud.net" ]; then
+  host=192.168.0.27
+elif [ "$RHOST" = "replica9.enlightedcloud.net" ]; then
+  host=192.168.0.28
+elif [ "$RHOST" = "replica10.enlightedcloud.net" ]; then
+  host=192.168.0.29
+elif [ "$RHOST" = "replica11.enlightedcloud.net" ]; then
+  host=192.168.0.30
+fi
+
+PSQL="/usr/bin/psql --host=${host} --username=postgres --dbname=${RDB} --no-align --quiet --tuples-only"
+
+if [ $LCA -gt $HOURAGO ]; then
+ if [ $TS -lt $TWOHOURAGO ]; then
+
+  SQL="SELECT count(*) FROM cloud_config WHERE name='lastWalSyncId'"
+  RESULT=`${PSQL} --command="${SQL}"`
+
+  if [ ${RESULT} -gt 1 ]; then
+    SQL="SELECT id FROM cloud_config WHERE name='lastWalSyncId' AND id!='1' LIMIT 1"
+    DUPID=`${PSQL} --command="${SQL}"`
+    SQL="DELETE FROM cloud_config WHERE id='${DUPID}'"
+    RESULT=`${PSQL} --command="${SQL}"`
+    echo "Removed ${DUPID}"
+  else
+    echo "No Duplicate lastWalSyncId found..."
+  fi
+ fi
+else
+  echo "Last Connectivity at $LCA"
+fi

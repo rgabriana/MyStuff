@@ -1,0 +1,22 @@
+---
+- hosts: all_test_replicas 
+  remote_user: root 
+  tasks:
+  - name: Ensure apache2 is installed
+    apt:
+      name: apache2 
+      state: installed
+  - name: Configure apache2 for replica
+    copy: 
+      src: templates/apache2/replica/000-default-replica.conf
+      dest: /etc/apache2/sites-enabled/000-default-replica.conf
+      owner: root 
+      group: root 
+      mode: 0644
+    notify:
+    - restart apache2
+  handlers:
+  - name: restart apache2
+    service:
+      name: apache2 
+      state: restarted

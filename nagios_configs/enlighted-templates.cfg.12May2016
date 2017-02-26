@@ -1,0 +1,240 @@
+define command{
+  command_name check_ssh_tunnel_port
+  command_line /usr/lib/nagios/plugins/check_by_ssh -l ops -H cloudui.enlightedcloud.net -i ~nagios/.ssh/id_dsa -o ControlMaster=no -o StrictHostKeyChecking=no -o GSSAPIAuthentication=no -C "/usr/lib/nagios/plugins/check_ssh -p '$ARG1$' localhost"
+}
+
+#define command{
+#  command_name check_em_fixture_count
+#  command_line /usr/lib/nagios/plugins/check_enlighted_gateway_count $ARG1$ $ARG2$ "SELECT count(*) FROM fixture WHERE state='COMMISSIONED'"
+#}
+
+#define command{
+#  command_name check_em_fixture_7d_count
+#  command_line /usr/lib/nagios/plugins/check_enlighted_gateway_count $ARG1$ $ARG2$ "SELECT count(*) FROM fixture WHERE state='COMMISSIONED' AND last_connectivity_at < now() - interval '7 day'"
+#}
+
+define command{
+  command_name check_em_fixture_7d_failures
+  command_line /usr/lib/nagios/plugins/check_enlighted_fixture_failures $ARG1$ $ARG2$ 7 5 10
+}
+define command{
+  command_name check_em_fixture_30d_failures
+  command_line /usr/lib/nagios/plugins/check_enlighted_fixture_failures $ARG1$ $ARG2$ 30 5 10
+}
+define command{
+  command_name check_em_fixture_30d_failures_15p
+  command_line /usr/lib/nagios/plugins/check_enlighted_fixture_failures $ARG1$ $ARG2$ 30 5 15 $HOSTNAME$
+}
+
+#define command{
+#  command_name check_em_gateway_count
+#  command_line /usr/lib/nagios/plugins/check_enlighted_gateway_count $ARG1$ $ARG2$ "SELECT count(*) FROM gateway WHERE commissioned=true"
+#}
+
+define command{
+  command_name check_em_gateway_1d_count
+  command_line /usr/lib/nagios/plugins/check_enlighted_gateway_failures $ARG1$ $ARG2$ "SELECT id FROM gateway WHERE commissioned=true AND last_connectivity_at < now() - interval '1 day'" 10 50
+}
+define command{
+  command_name check_em_gateway_7d_count
+  command_line /usr/lib/nagios/plugins/check_enlighted_gateway_failures $ARG1$ $ARG2$ "SELECT id FROM gateway WHERE commissioned=true AND last_connectivity_at < now() - interval '7 day'" 10 50
+}
+
+#define command{
+#  command_name check_em_gateway_7d_count
+#  command_line /usr/lib/nagios/plugins/check_enlighted_gateway_failures $ARG1$ $ARG2$ "SELECT count(*) FROM gateway WHERE commissioned=true AND last_connectivity_at < now() - interval '7 day'" 10 35
+#}
+#define command{
+#  command_name check_em_gateway_30d_count
+#  command_line /usr/lib/nagios/plugins/check_enlighted_gateway_failures $ARG1$ $ARG2$ "SELECT count(*) FROM gateway WHERE commissioned=true AND last_connectivity_at < now() - interval '30 day'" 5 20
+#}
+
+define command{
+  command_name check_cloud_database_status
+  command_line /usr/lib/nagios/plugins/check_enlighted_cloud_database_status $HOSTNAME$
+}
+
+define command{
+  command_name check_ecloud_ems_http
+  command_line /bin/bash +x /usr/lib/nagios/plugins/check_enlighted_ecloud_ems_http $HOSTNAME$
+}
+
+define host{
+  use generic-host
+  name em-host
+  check_command return-ok
+  active_checks_enabled 0
+  max_check_attempts 1
+  contact_groups devops
+  register 0
+}
+
+define host{
+  use generic-host
+  name replica-host
+  contact_groups devops
+  register 0
+}
+
+define host{
+  use generic-host
+  name master-host
+  contact_groups devops
+  register 0
+}
+
+define service{
+  use generic-service
+  name cloud-service
+  contact_groups devops
+  register 0
+}
+
+define service{
+  use generic-service
+  name em-service
+  active_checks_enabled 0
+  passive_checks_enabled 1
+  max_check_attempts 1
+  check_interval 60
+  retry_interval 30
+  active_checks_enabled 0; disabled
+  check_period 24x7
+  notification_interval 60
+  register 0
+}
+
+define service{
+  use em-service
+  name em-service-ssh
+  active_checks_enabled 1
+  passive_checks_enabled 0
+  max_check_attempts 4
+  check_interval 1440
+  retry_interval 60
+  active_checks_enabled 1
+  check_period 24x7
+  notification_interval 86400
+  register 0
+}
+
+define service{
+  use em-service
+  name em-service-fixture
+  active_checks_enabled 1
+  passive_checks_enabled 0
+  max_check_attempts 4
+#  check_interval 1440 # 24 hours
+  check_interval 360 # 6 hours
+  retry_interval 60
+  active_checks_enabled 1
+  check_period 24x7
+  notification_interval 86400
+  register 0
+}
+
+define service{
+  use em-service-fixture
+  name em-service-gw
+  active_checks_enabled 1
+  passive_checks_enabled 0
+  max_check_attempts 4
+  check_interval 60
+  retry_interval 15
+  active_checks_enabled 1
+  check_period 24x7
+  notification_interval 86400
+  register 0
+}
+
+define service{
+  use em-service
+  name em-service-http
+  active_checks_enabled 1
+  passive_checks_enabled 0
+  max_check_attempts 5
+  check_interval 30 # half hour
+  retry_interval 10
+  active_checks_enabled 1
+  check_period 24x7
+  notification_interval 86400
+  register 0
+}
+define service{
+  use em-service-http
+  name em-service-http-notif
+  contact_groups devops
+  register 0
+}
+define service{
+  use em-service
+  host_name .*
+  service_description replica
+  check_command return-ok
+  register 0
+}
+
+define service{
+  use em-service
+  host_name EM-.*
+  service_description last_connectivity_at
+  check_command return-unknown
+}
+
+define service{
+  use em-service
+  host_name EM-.*
+  service_description last_successful_sync_time
+  check_command return-unknown
+  # disable 3/28/16 9:35am PST -paulp
+  #event_handler last_walSync_fix
+}
+
+define command{
+  command_name last_walSync_fix
+  command_line /bin/bash /etc/nagios/bin/last_walSync_fix $HOSTNAME$ $SERVICESTATE$
+}
+
+define service{
+  use em-service
+  host_name EM-.*
+  service_description version
+  check_command return-unknown
+}
+
+define service{
+  use em-service-gw
+  host_name EM-.*
+  service_description cloud database status
+  check_command check_cloud_database_status
+}
+
+
+
+define service{
+  use em-service-http
+  host_name EM-.*
+  hostgroup_name !Customer-DELL-900
+  service_description browsable_link
+  check_command check_ecloud_ems_http
+}
+define service{
+  use em-service-http-notif
+  hostgroup_name Customer-DELL-900
+  service_description browsable_link
+  check_command check_ecloud_ems_http
+}
+
+
+
+define command{
+  command_name check_cloud_config_upgradeStatus
+  command_line /bin/bash +x /usr/lib/nagios/plugins/check_enlighted_cloud_config_upgradeStatus $HOSTNAME$
+}
+define service{
+  use em-service-gw
+  host_name EM-.*
+  service_description cloud_config upgradeStatus
+  check_command check_cloud_config_upgradeStatus
+  register 0
+}

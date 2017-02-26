@@ -1,0 +1,26 @@
+---
+- name: Create groups
+  group:
+    name: ops
+    state: present
+- name: Create users
+  user:
+    name: rgabriana
+    shell: /bin/bash
+    home: /home/rgabriana
+    groups: ops
+    comment: "OPS group"
+- name: ssh dir
+  file: 
+    path:	/home/rgabriana/.ssh
+    state:	directory
+    owner:	rgabriana
+    group:	rgabriana
+    mode:	0700
+- name: ssh keys      
+  copy:
+    src: templates/users/rgabriana/rgabriana.pub
+    dest: /home/rgabriana/.ssh/authorized_keys
+    owner: rgabriana
+    group: rgabriana 
+    mode: 0600

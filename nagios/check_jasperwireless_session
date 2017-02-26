@@ -1,0 +1,82 @@
+#!/usr/bin/perl -w 
+use strict;
+use Data::Dumper;
+use SOAP::Lite; # +trace => ['debug'];
+use Date::Manip;
+use Date::Parse;
+use DateTime;
+use DateTime::Format::ISO8601 qw( );
+use POSIX;
+
+my $JASPER_URI = 'http://api.jasperwireless.com/ws/schema';
+my $WSSE_URI = 'http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd';
+my $PASSWORD_TYPE = 'http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-username-token-profile-1.0#PasswordText';
+
+my $env = 'api';
+my $url = 'https://'.$env.'.jasperwireless.com/ws/service/terminal';
+my $soapAction = 'http://api.jasperwireless.com/ws/service/terminal/GetSessionInfo';
+my $licenseKey = 'a988d4de-210c-4691-8ede-1defe19d5ff4';
+my $userName = 'devops';
+my $password = '1qaz!QAZ2wsx2wsx';
+
+my $service = SOAP::Lite->proxy($url)->uri($JASPER_URI)->autotype(0)->readable(1);
+$service->on_fault(sub {
+    my ($soap,$response) = @_;
+    die('The following SOAP fault occurred:', "\n",
+	' faultcode: ', $response->faultcode(), "\n",
+	' faultstring: ', $response->faultstring(), "\n",
+	' faultdetail: ', Dumper($response->faultdetail()), "\n")
+    });
+
+$service->on_action(sub{return $soapAction;});
+my $result = $service->call('GetSessionInfoRequest' => (
+  SOAP::Header->uri($WSSE_URI)->name('wsse:Security' =>
+      \SOAP::Data->name('wsse:UsernameToken'=>
+          \SOAP::Data->value(
+	      SOAP::Data->name('wsse:Username' => $userName),
+	      SOAP::Data->name('wsse:Password' => $password)->
+		   attr({Type => $PASSWORD_TYPE})))),
+  SOAP::Data->name('messageId' => ''),
+  SOAP::Data->name('version' => ''),
+  SOAP::Data->name('licenseKey' => $licenseKey),
+  SOAP::Data->name('iccid' => "$ARGV[0]")
+));
+
+#print "ICCID: " . $ARGV[0] . "\n";
+my $time = str2time($result->valueof('//sessionInfo/session/dateSessionStarted'));
+#print $time . "\n";
+my $date = scalar localtime($time);
+#my $strt = str2time($date);
+#print $strt . "\n";
+#print $now . "\n";
+my $nowdate = scalar localtime();
+my $now  = str2time($nowdate);
+#print $now . "\n";
+#my $sub = $now - $strt;
+#print "\n" . $nowdate . "\n";
+#print "\n" . $sub . "\n";
+my $diff = floor(($now - $time)/60/60/24);
+#print $diff;
+#my $format = DateTime::Format::ISO8601->new();
+#my $dt_resolved = $format->parse_datetime($time);
+#my $dt_current  = $format->parse_datetime($now);
+#my $dur = $dt_resolved->delta_days($dt_current);
+#my $days = $dur->in_units('days');
+#print $days . '\n';
+if ( $diff == 0 ) {
+  $diff = floor(($now - $time)/60/60);
+  if ( $diff == 0 ) {
+    $diff = floor(($now - $time)/60);
+    $diff = $diff . "m";
+  } else {
+    $diff = $diff . "h";
+  }
+} else {
+  $diff = $diff . "d";
+}
+print "Session Start: " . $date . " - Duration: " . $diff . "\n";
+#if ( $diff <= 3 ) {
+#  exit 1;
+#} else {
+#  exit 0;
+#}

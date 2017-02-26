@@ -1,0 +1,14 @@
+#!/bin/bash 
+
+cat $1|while read input 
+
+do 
+
+
+  if [ "$ssht" != "f" ]; then
+    echo "tunnel is open for $em_id"
+  else 
+    echo "tunnel is not open for $em_id"
+  fi
+
+done

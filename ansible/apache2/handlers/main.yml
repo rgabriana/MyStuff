@@ -1,0 +1,16 @@
+---
+# handlers file for apache2
+- name: start Apache2 services
+  service: 
+    name: apache2
+    state: stop
+
+- name: start Apache2 services
+  service:
+    name: apache2
+    state: start
+
+- name: restart Apache2 services 
+    service: 
+      name: apache2
+      state: restart

@@ -1,0 +1,10 @@
+---
+tasks:
+-name: Create the OPS user
+  user: name=ops shell=/bin/bash
+
+-name: setup the ssh key for the ops user
+  authorized_key: 
+    manage_dir: yes 
+    user: ops
+    key: https://pl3.projectlocker.com/enlightedinc/Gems/svn/gems/trunk/ecloud/artifacts/tools/security/home/ops/.ssh/authorized_keys
