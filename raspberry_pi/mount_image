@@ -1,0 +1,91 @@
+#!/bin/bash
+set -e
+
+# Environment check 
+
+
+# Root check 
+
+if [ $UID != 0 ]; then 
+  echo -e "YOU NEED ADMIN PRIVELEGES TO RUN THIS SCRIPT"
+  exit
+else 
+  echo -e "The purpose of this script is to extract the raspberry pi image and mount the image so that you can modify it\n"
+fi
+
+read -p "Please enter the file location of the raspberry pi image " rimage
+echo -e "\n\nRaspberry pi's comes with 2 partitions.\nA root partition and a boot partition.\n\n"
+read -p "Please enter the folder you want to mount the root partition " rmount
+read -p "Please enter the folder you want to mount the boot partition " bmount
+echo -e "\n\nOne moment please while I mount those partitions\n\n"
+
+
+# Image check 
+
+if [ ! -e $rimage ]; then
+    echo -e "$rimage file is not a regular file"
+    exit
+fi
+
+if [ ! -r $rimage ]; then 
+    echo -e "You don't have permission to read $rimage"
+    exit
+fi
+
+# dir check 
+
+# root
+
+if [ ! -d $rmount ]; then 
+  mkdir -pv $rmount
+fi
+
+# boot
+
+if [ ! -d $bmount ]; then
+  mkdir -pv $bmount
+fi
+
+# partition calculation
+
+
+  rdisksize=`fdisk -l $rimage|grep -e '.img2'|grep -v grep|awk -F " " '{print $2}'`
+  roffset=`echo $[rdisksize*512]`
+
+
+  bdisksize=`fdisk -l $rimage|grep -e '.img1'|grep -v grep|awk -F " " '{print $2}'`
+  boffset=`echo $[bdisksize*512]`
+
+# mount the first partition
+
+mount -v -t vfat -o loop,offset=$boffset $rimage $bmount
+
+# mount the second partition
+
+mount -v -t ext4 -o loop,offset=$roffset $rimage $rmount
+
+echo -e "\n\nYour raspberry pi boot image has been mounted to $bmount and your root image has been mounted to $rmount\n\n"
+read -p "\n\nDo you want to load your modified configs into this raspberry pi image?\n\n" mod
+
+case $mod in
+
+	[Yy][Ee][Ss] )
+
+		
+
+	;;
+
+	[Nn][Oo] )
+		echo -e "As you wish.  Goodday"
+		exit
+	;;
+
+	*)
+		echo -e "I really do not have time to pander your indecissiveness.  Goodbye"
+		exit
+	;;
+
+		
+esac
+
+exit
