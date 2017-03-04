@@ -67,11 +67,11 @@ mount -v -t ext4 -o loop,offset=$roffset $rimage $rmount
 echo -e "\n\nYour raspberry pi boot image has been mounted to $bmount and your root image has been mounted to $rmount\n\n"
 read -p "\n\nDo you want to load your modified configs into this raspberry pi image?\n\n" mod
 
-xfer () {
-  
-}
-case $mod in
 
+
+
+
+case $mod in
 
 	[Yy][Ee][Ss] )
 
