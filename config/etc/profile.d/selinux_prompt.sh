@@ -32,6 +32,6 @@ if  [ "$PS1" ]; then
   }
 
     # show the prompt
-    PS1='[SELinux: $(status)]\n[\u@\h: \W]\$ '
+    PS1='[SELinux: $(selogo)]\n[\u@\h: \W]\$ '
     
 fi
