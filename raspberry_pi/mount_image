@@ -1,35 +1,42 @@
 #!/bin/bash
 set -e
 
-# Environment check 
-
+PATH=/home/rgabriana/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 
 # Root check 
 
 if [ $UID != 0 ]; then 
-  echo -e "YOU NEED ADMIN PRIVELEGES TO RUN THIS SCRIPT"
+
+  echo -e "YOU NEED ADMIN PRIVELEGES TO RUN THIS SCRIPT\n"
   exit
+
 else 
+
   echo -e "The purpose of this script is to extract the raspberry pi image and mount the image so that you can modify it\n"
+
 fi
 
-read -p "Please enter the file location of the raspberry pi image " rimage
-echo -e "\n\nRaspberry pi's comes with 2 partitions.\nA root partition and a boot partition.\n\n"
-read -p "Please enter the folder you want to mount the root partition " rmount
-read -p "Please enter the folder you want to mount the boot partition " bmount
-echo -e "\n\nOne moment please while I mount those partitions\n\n"
+read -p "Please enter the file location of the raspberry pi image. \n" rimage
+echo -e "Raspberry pi's comes with 2 partitions.\nA root partition and a boot partition.\n"
+read -p "Please enter the folder you want to mount the root partition. \n" rmount
+read -p "Please enter the folder you want to mount the boot partition. \n" bmount
+echo -e "One moment please while I mount those partitions\n"
 
 
 # Image check 
 
 if [ ! -e $rimage ]; then
-    echo -e "$rimage file is not a regular file"
-    exit
+
+  echo -e "$rimage file is not a regular file\n"
+  exit
+
 fi
 
 if [ ! -r $rimage ]; then 
-    echo -e "You don't have permission to read $rimage"
-    exit
+
+  echo -e "You don't have permission to read $rimage . \n"
+  exit
+
 fi
 
 # dir check 
@@ -37,24 +44,25 @@ fi
 # root
 
 if [ ! -d $rmount ]; then 
+
   mkdir -pv $rmount
+
 fi
 
 # boot
 
 if [ ! -d $bmount ]; then
+
   mkdir -pv $bmount
+
 fi
 
 # partition calculation
 
-
-  rdisksize=`fdisk -l $rimage|grep -e '.img2'|grep -v grep|awk -F " " '{print $2}'`
-  roffset=`echo $[rdisksize*512]`
-
-
-  bdisksize=`fdisk -l $rimage|grep -e '.img1'|grep -v grep|awk -F " " '{print $2}'`
-  boffset=`echo $[bdisksize*512]`
+rdisksize=`fdisk -l $rimage|grep -e '.img2'|grep -v grep|awk -F " " '{print $2}'`
+roffset=`echo $[rdisksize*512]`
+bdisksize=`fdisk -l $rimage|grep -e '.img1'|grep -v grep|awk -F " " '{print $2}'`
+boffset=`echo $[bdisksize*512]`
 
 # mount the first partition
 
@@ -64,32 +72,37 @@ mount -v -t vfat -o loop,offset=$boffset $rimage $bmount
 
 mount -v -t ext4 -o loop,offset=$roffset $rimage $rmount
 
-echo -e "\n\nYour raspberry pi boot image has been mounted to $bmount and your root image has been mounted to $rmount\n\n"
-read -p "\n\nDo you want to load your modified configs into this raspberry pi image?\n\n" mod
+echo -e "Your raspberry pi boot image has been mounted to $bmount and your root image has been mounted to $rmount\n"
+read -p "Do you want to load your modified configs into this raspberry pi image?\n\n" mod
 
+  case $mod in
 
+    [Yy][Ee][Ss] )
 
+      read -p "enter the full path of the modified configs" config_folder
+      configs=$(find $config_folder -type f)
 
+      for src in $configs;
+        do
 
-case $mod in
+          target=$(echo "$src")|sed -e "s|$config_folder||g"
+          cp -vf "$src" "$target"
 
-	[Yy][Ee][Ss] )
+        done
+    ;;
 
-		
+    [Nn][Oo] )
 
-	;;
+      echo -e "As you wish.  Goodday\n"
+      exit
 
-	[Nn][Oo] )
-		echo -e "As you wish.  Goodday"
-		exit
-	;;
+    ;;
 
-	*)
-		echo -e "I really do not have time to pander your indecissiveness.  Goodbye"
-		exit
-	;;
+    * )
 
-		
-esac
+      echo -e "I really do not have time to pander your indecissiveness.  Goodbye\n"
+      exit
 
-exit
+    ;;
+
+  esac
