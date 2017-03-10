@@ -1,15 +1,15 @@
 ---
 - name: Create groups
   group:
-    name: ops
+    name: thundercatsops
     state: present
 - name: Create users
   user:
     name: rgabriana
     shell: /bin/bash
     home: /home/rgabriana
-    groups: ops
-    comment: "OPS group"
+    groups: thundercats
+    comment: "Lion-O"
 - name: ssh dir
   file: 
     path:	/home/rgabriana/.ssh
