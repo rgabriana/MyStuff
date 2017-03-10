@@ -1,26 +1,16 @@
 ---
-- name: Create groups
-  group:
-    name: thundercatsops
-    state: present
-- name: Create users
-  user:
-    name: rgabriana
-    shell: /bin/bash
-    home: /home/rgabriana
-    groups: thundercats
-    comment: "Lion-O"
-- name: ssh dir
-  file: 
-    path:	/home/rgabriana/.ssh
-    state:	directory
-    owner:	rgabriana
-    group:	rgabriana
-    mode:	0700
-- name: ssh keys      
-  copy:
-    src: templates/users/rgabriana/rgabriana.pub
-    dest: /home/rgabriana/.ssh/authorized_keys
-    owner: rgabriana
-    group: rgabriana 
-    mode: 0600
+- hosts: adobo
+
+  tasks:
+
+  - name: Create groups
+    group:  name=thundercats state=present
+
+  - name: Create users
+    user:  name=rgabriana state=present shell=/bin/bash home=/home/rgabriana groups=thundercats comment="Lion-O"
+
+  - name: ssh dir
+    file: path=/home/rgabriana/.ssh state=directory owner=rgabriana group=rgabriana mode=0700
+
+  - name: ssh keys      
+    copy:  src=templates/users/rgabriana/rgabriana.pub dest=/home/rgabriana/.ssh/authorized_keys owner=rgabriana group=rgabriana mode=0600
