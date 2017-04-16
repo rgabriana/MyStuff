@@ -16,11 +16,17 @@ else
 
 fi
 
-read -p "Please enter the file location of the raspberry pi image. \n" rimage
-echo -e "Raspberry pi's comes with 2 partitions.\nA root partition and a boot partition.\n"
-read -p "Please enter the folder you want to mount the root partition. \n" rmount
-read -p "Please enter the folder you want to mount the boot partition. \n" bmount
-echo -e "One moment please while I mount those partitions\n"
+# enable programmable completion features
+
+if ! shopt -oq posix; then
+  if [ -f /usr/share/bash-completion/bash_completion ]; then
+    . /usr/share/bash-completion/bash_completion
+  elif [ -f /etc/bash_completion ]; then
+    . /etc/bash_completion
+  fi
+fi
+
+read -p "Please enter the file location of the raspberry pi image? " rimage
 
 
 # Image check 
@@ -41,6 +47,9 @@ fi
 
 # dir check 
 
+echo -e "Raspberry pi's comes with 2 partitions.\nA root partition and a boot partition.\n"
+read -p "Please enter the folder you want to mount the root partition? " rmount
+
 # root
 
 if [ ! -d $rmount ]; then 
@@ -49,6 +58,8 @@ if [ ! -d $rmount ]; then
 
 fi
 
+read -p "Please enter the folder you want to mount the boot partition? " bmount
+
 # boot
 
 if [ ! -d $bmount ]; then
@@ -56,6 +67,8 @@ if [ ! -d $bmount ]; then
   mkdir -pv $bmount
 
 fi
+
+echo -e "One moment please while I mount those partitions\n"
 
 # partition calculation
 
@@ -73,36 +86,60 @@ mount -v -t vfat -o loop,offset=$boffset $rimage $bmount
 mount -v -t ext4 -o loop,offset=$roffset $rimage $rmount
 
 echo -e "Your raspberry pi boot image has been mounted to $bmount and your root image has been mounted to $rmount\n"
-read -p "Do you want to load your modified configs into this raspberry pi image?\n\n" mod
+read -p "Do you want to load your modified configs into this raspberry pi image? " mod
 
   case $mod in
 
     [Yy][Ee][Ss] )
 
       read -p "enter the full path of the modified configs" config_folder
-      configs=$(find $config_folder -type f)
+      configs=$(find $config_folder -type f | sed -s 's|./||')
 
-      for src in $configs;
-        do
+      for src in $configs; do
 
-          target=$(echo "$src")|sed -e "s|$config_folder||g"
-          cp -vf "$src" "$target"
+        echo -e "creating backup of $src"
+        cp -vf $src $src.bk
+        echo -e "implementing modified configs"
+        target="$rmount/$src"
+        cp -vf "$src" "$target"
 
-        done
+      done
+
+      mount_ () {
+      read -p "Load complete do you want to unmount? " _mount
+      case $_mount in 
+
+        [Yy][Ee][Ss] )
+          umount -v $rmount
+          umount -v $bmount
+          exit
+        ;;
+
+        [Nn][Oo] )
+          echo -e "As you wish"
+          exit
+        ;;
+
+        * )
+          echo -e "Please answer yes or no"
+          mount_
+        ;;
+
+      esac }
+
+      mount_
     ;;
 
     [Nn][Oo] )
 
       echo -e "As you wish.  Goodday\n"
       exit
-
     ;;
 
     * )
 
       echo -e "I really do not have time to pander your indecissiveness.  Goodbye\n"
       exit
-
     ;;
 
   esac
