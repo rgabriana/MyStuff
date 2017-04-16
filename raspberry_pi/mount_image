@@ -10,20 +10,10 @@ if [ $UID != 0 ]; then
   echo -e "YOU NEED ADMIN PRIVELEGES TO RUN THIS SCRIPT\n"
   exit
 
-else 
+else
+ 
+  echo -e "The purpose of this script is to extract the raspberry pi image and mount the image so that you can modify it.\n"
 
-  echo -e "The purpose of this script is to extract the raspberry pi image and mount the image so that you can modify it\n"
-
-fi
-
-# enable programmable completion features
-
-if ! shopt -oq posix; then
-  if [ -f /usr/share/bash-completion/bash_completion ]; then
-    . /usr/share/bash-completion/bash_completion
-  elif [ -f /etc/bash_completion ]; then
-    . /etc/bash_completion
-  fi
 fi
 
 read -p "Please enter the file location of the raspberry pi image? " rimage
@@ -85,29 +75,45 @@ mount -v -t vfat -o loop,offset=$boffset $rimage $bmount
 
 mount -v -t ext4 -o loop,offset=$roffset $rimage $rmount
 
-echo -e "Your raspberry pi boot image has been mounted to $bmount and your root image has been mounted to $rmount\n"
+echo -e "Your raspberry pi boot image has been mounted to \n $bmount \n and your root image \
+has been mounted to \n $rmount.\nThis script can also apply your modified configs onto the \
+image, for this to work properly, the directory structure of the \"source\" folders and files \
+must match the targets folders and files.\n Example: \"/source/direcotry/path/file\" -> \
+\"$rmount/directory/path/file\".\n"
+
 read -p "Do you want to load your modified configs into this raspberry pi image? " mod
 
   case $mod in
 
     [Yy][Ee][Ss] )
 
-      read -p "enter the full path of the modified configs" config_folder
-      configs=$(find $config_folder -type f | sed -s 's|./||')
+      read -p "enter the full path of the modified configs: " config_folder
+      configs=$(find $config_folder -type f)
 
       for src in $configs; do
+        target_folder=$rmount/`dirname $src | sed -s "s|$config_folder||"`
+        target_file=`basename $src`
+        file_check () {
+          md5sum $1 | awk -F " " '{print $1}'
+	}
+        [ ! -d $target_folder ] && echo -e "creating target folders" && mkdir -pv $target_folder
 
-        echo -e "creating backup of $src"
-        cp -vf $src $src.bk
-        echo -e "implementing modified configs"
-        target="$rmount/$src"
-        cp -vf "$src" "$target"
+          if [ $(file_check $target_folder/$target_file) !=  $(file_check $src) ]; then
+            echo -e "creating backups of $target_file"
+            cp -pv $target_folder/$target_file $target_folder/$target_file.bk
+            echo -e "implementing modified configs"
+            cp -pv $src $target_folder
+            chown --reference=$target_folder/$target_file.bk $target_folder/$target_file
+            chmod --reference=$target_folder/$target_file.bk $target_folder/$target_file
+          else
+            echo -e "$target_folder/$target_file and $src are the same no actions needed"
+          fi
 
       done
 
       mount_ () {
-      read -p "Load complete do you want to unmount? " _mount
-      case $_mount in 
+      read -p "Load complete do you want to unmount? " umount
+      case $umount in 
 
         [Yy][Ee][Ss] )
           umount -v $rmount
