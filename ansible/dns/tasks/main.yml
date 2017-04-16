@@ -1,0 +1,48 @@
+---
+# tasks file for dns
+- name: INSTALLING APPLICATIONS
+  apt:
+    name: {{ item }}
+    update_cache: yes
+    install_recommends: yes
+    upgrade: safe
+    state: present
+  with_items:
+    - dnsmasq
+    - vim
+  when: 
+    - ansible_os_family == 'Debian'
+    - ansible_lsb.description == 'Raspbian GNU/Linux 8.0 (jessie)'
+
+- name: CREATING THE BLACKLIST
+    file: 
+      path: /etc/dnsmasq.d/blacklist.conf
+      group: root
+      owner: root
+      mode: 0644
+
+- name: CONFIGURING THE DOMAIN SERVER
+  lineinfile:
+    name: /etc/dnsmasq.conf
+    state: present
+    line: 
+      - 'domain-needed'
+      - 'bogus-priv'
+      - 'domain=lobujet.com'
+      - 'expand-hosts'
+      - 'local=/lobujet.com/'
+      - 'listen-address=127.0.0.1'
+      - 'listen-address=192.168.10.250'
+      - 'bind-interfaces'
+      - 'bogus-nxdomain=64.94.110.11'
+      - 'conf-file=/etc/dnsmasq.d/blacklist.conf'
+
+- name: CONFIGURING THE NETWORK ADDRESSES
+    template:
+      src: template/home.j2
+      dest: /etc/hosts
+      state: present
+      owner: root
+      group: root
+      mode: 0644
+      backup: yes

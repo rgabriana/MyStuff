@@ -1,0 +1,8 @@
+---
+# vars file for users
+users:
+  - name: rgabriana
+    comment: 
+      - LionO
+    ssh_key:
+      - files/rgabriana.pub

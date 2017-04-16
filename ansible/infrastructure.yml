@@ -1,0 +1,7 @@
+---
+- hosts:
+    - pansit
+    - adobo
+  roles:
+    - users
+    - common_rpms

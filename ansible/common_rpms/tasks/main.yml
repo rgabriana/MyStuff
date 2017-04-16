@@ -1,0 +1,25 @@
+---
+# tasks file for common_rpms
+- name: PRE-CONFIGURING YUM
+  lineinfile:
+    name: /etc/yum.conf
+    owner: root
+    group: root
+    state: present
+    regexp: '^installonly_limit'
+    line: 'installonly_limit=2'
+
+- name: INSTALLING COMMON LINUX RPMS
+  yum:
+    update_cache: yes
+    state: present 
+    name: "{{ item }}"
+  with_items:
+    - vim-enhanced
+    - net-tools
+    - setroubleshoot
+    - policycoreutils
+    - policycoreutils-python
+    - setools
+    - selinux-policy-mls
+    - setools-console

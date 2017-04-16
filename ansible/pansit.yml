@@ -1,0 +1,5 @@
+---
+- hosts: pansit
+  roles:
+    - users
+    - common_rpms

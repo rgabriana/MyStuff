@@ -1,0 +1,5 @@
+---
+- hosts: adobo
+  roles:
+    - users
+    - common_rpms

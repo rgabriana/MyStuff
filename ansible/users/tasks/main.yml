@@ -1,0 +1,44 @@
+---
+# tasks file for users
+
+- name: CREATING SYSTEM ADMINISTRATOR GROUP
+  group:
+    name: thundercats
+    state: present
+
+- name: CREATING SYSTEM ADMINISTRATORS
+  user:
+    name: "{{ item.0.name }}"
+    groups: wheel,thundercats
+    append: yes
+    state: present
+    shell: /bin/bash
+    comment: "{{ item.1 }}"
+  with_subelements:
+    - "{{ users }}"
+    - comment
+
+- name: GENERATING ACCESS KEYS FOR USERS
+  authorized_key:
+    manage_dir: yes
+    user: "{{ item.0.name }}"
+    key: "{{ lookup('file', item.1) }}"
+  with_subelements:
+    - "{{ users }}"
+    - ssh_key
+
+- name: REMOVE PASSWORDS FOR THE SYSTEM ADMINISTRATOR
+  lineinfile:
+    name: /etc/sudoers
+    state: present
+    line: '%wheel	ALL=(ALL)	NOPASSWD: ALL'
+    insertafter: '## Same thing without a password'
+    validate: 'visudo -cf %s'
+
+- name: REMOVE ORIGINAL ENTRIES
+  lineinfile:
+    name: /etc/sudoers
+    state: absent
+    line: '%wheel	ALL=(ALL)	ALL:ALL'
+    validate: 'visudo -cf %s'
+
