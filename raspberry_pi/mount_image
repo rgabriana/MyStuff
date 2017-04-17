@@ -2,17 +2,21 @@
 set -e
 
 PATH=/home/rgabriana/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
-
+light_red_font="\e[91m"
+green_font="\e[32m"
+light_yellow_font="\e[93m"
+reset="\e[0m"
+#blink="\e[5m"
 # Root check 
 
 if [ $UID != 0 ]; then 
 
-  echo -e "YOU NEED ADMIN PRIVELEGES TO RUN THIS SCRIPT\n"
+  echo -e "$light_red_font YOU NEED ADMIN PRIVELEGES TO RUN THIS SCRIPT $reset\n"
   exit
 
 else
  
-  echo -e "The purpose of this script is to extract the raspberry pi image and mount the image so that you can modify it.\n"
+  echo -e "$light_yellow_font The purpose of this script is to extract the raspberry pi image and mount the image so that you can modify it. $reset \n"
 
 fi
 
@@ -23,21 +27,21 @@ read -p "Please enter the file location of the raspberry pi image? " rimage
 
 if [ ! -e $rimage ]; then
 
-  echo -e "$rimage file is not a regular file\n"
+  echo -e "$light_red_font $rimage file is not a regular file $reset \n"
   exit
 
 fi
 
 if [ ! -r $rimage ]; then 
 
-  echo -e "You don't have permission to read $rimage . \n"
+  echo -e "$light_red_font You don't have permission to read $rimage. $reset \n"
   exit
 
 fi
 
 # dir check 
 
-echo -e "Raspberry pi's comes with 2 partitions.\nA root partition and a boot partition.\n"
+echo -e "$light_yellow_font Raspberry pi's comes with 2 partitions.\nA root partition and a boot partition. $reset \n"
 read -p "Please enter the folder you want to mount the root partition? " rmount
 
 # root
@@ -58,7 +62,7 @@ if [ ! -d $bmount ]; then
 
 fi
 
-echo -e "One moment please while I mount those partitions\n"
+echo -e "$green_font One moment please while I mount those partitions $reset \n"
 
 # partition calculation
 
@@ -75,11 +79,12 @@ mount -v -t vfat -o loop,offset=$boffset $rimage $bmount
 
 mount -v -t ext4 -o loop,offset=$roffset $rimage $rmount
 
-echo -e "Your raspberry pi boot image has been mounted to \n $bmount \n and your root image \
-has been mounted to \n $rmount.\nThis script can also apply your modified configs onto the \
-image, for this to work properly, the directory structure of the \"source\" folders and files \
-must match the targets folders and files.\n Example: \"/source/direcotry/path/file\" -> \
-\"$rmount/directory/path/file\".\n"
+echo -e "$light_yellow_font Your raspberry pi boot image has been mounted to \
+$light_red_font $bmount $light_yellow_font and your root image has been mounted to \
+$light_red_font $rmount $light_yellow_font.  This script can also apply your modified configs \
+onto the image, for this to work properly, the directory structure of the \"source\" folders \
+and files must match the targets folders and files.\n\n $light_red_font Example: \
+\"/source/direcotry/path/file\" -> \"$rmount/directory/path/file\". $reset \n"
 
 read -p "Do you want to load your modified configs into this raspberry pi image? " mod
 
@@ -96,17 +101,32 @@ read -p "Do you want to load your modified configs into this raspberry pi image?
         file_check () {
           md5sum $1 | awk -F " " '{print $1}'
 	}
-        [ ! -d $target_folder ] && echo -e "creating target folders" && mkdir -pv $target_folder
-
-          if [ $(file_check $target_folder/$target_file) !=  $(file_check $src) ]; then
-            echo -e "creating backups of $target_file"
-            cp -pv $target_folder/$target_file $target_folder/$target_file.bk
-            echo -e "implementing modified configs"
-            cp -pv $src $target_folder
-            chown --reference=$target_folder/$target_file.bk $target_folder/$target_file
-            chmod --reference=$target_folder/$target_file.bk $target_folder/$target_file
+        echo -e "$light_yellow_font folder check $target_folder $reset"
+          if [ ! -d $target_folder ]; then 
+            echo -e "$light_yellow_font creating target folders $target_folder $reset" 
+            mkdir -pv $target_folder
+          fi
+        echo -e "$light_yellow_font file check $target_file $reset"
+          if [ -f $target_folder/$target_file ]; then
+            echo -e "$light_yellow_font file $target_file exists checking signature $reset"
+            if [ "$(file_check $target_folder/$target_file)" !=  "$(file_check $src)" ]; then
+              echo -e "$light_red_font source $src and target $target_file signatures don't match.  Creating backups of $target_file $reset"
+              cp -puv $target_folder/$target_file $target_folder/$target_file.bk
+            else
+              echo -e "$green_font $target_folder/$target_file and $src are the same no actions needed $reset"
+            fi
           else
-            echo -e "$target_folder/$target_file and $src are the same no actions needed"
+              echo -e "$light_red_font $target_file file doesn't exist not creating backups $reset"
+
+          fi
+ 
+          echo -e "$light_yellow_font implementing modified configs $target_file $reset"
+          cp -puv $src $target_folder/$target_file
+          if [ -f $target_folder/$target_file.bk ]; then
+            chown -vf --reference=$target_folder/$target_file.bk $target_folder/$target_file
+            chmod -vf --reference=$target_folder/$target_file.bk $target_folder/$target_file
+          else
+            echo -e "$light_red_font reference file doesn't exist, moving on $reset"
           fi
 
       done
@@ -122,12 +142,12 @@ read -p "Do you want to load your modified configs into this raspberry pi image?
         ;;
 
         [Nn][Oo] )
-          echo -e "As you wish"
+          echo -e "$green_font As you wish $reset"
           exit
         ;;
 
         * )
-          echo -e "Please answer yes or no"
+          echo -e "$green_font Please answer $light_red_font yes $reset or $light_red_font no $reset"
           mount_
         ;;
 
@@ -138,13 +158,13 @@ read -p "Do you want to load your modified configs into this raspberry pi image?
 
     [Nn][Oo] )
 
-      echo -e "As you wish.  Goodday\n"
+      echo -e "$green_font As you wish.  Goodday $reset \n"
       exit
     ;;
 
     * )
 
-      echo -e "I really do not have time to pander your indecissiveness.  Goodbye\n"
+      echo -e "$light_red_font I really do not have time to pander your indecissiveness.  Goodbye $reset \n"
       exit
     ;;
 
