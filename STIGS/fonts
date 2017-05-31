@@ -1,0 +1,21 @@
+#!/bin/bash
+###########################################
+# Simple collection of font colors for bash
+###########################################
+resetfont='\e[0m'
+blackfont='\e[30m'
+redfont='\e[31m'
+greenfont='\e[32m'
+yellowfont='\e[33m'
+bluefont='\e[34m'
+magentafont='\e[35m'
+cyanfont='\e[36m'
+lgrayfont='\e[37m'
+dgrayfont='\e[90m'
+lredfont='\e[91m'
+lgreenfont='\e[92m'
+lyellowfont='\e[93m'
+lbluefont='\e[94m'
+lmagentafont='\e[95m'
+lcyanfont='\e[96m'
+whitefont='\e[97m'
