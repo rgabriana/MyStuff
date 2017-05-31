@@ -1,0 +1,6 @@
+#!/bin/bash
+#############################
+# Collection of function checks to perform security audit based on \
+# RHEL 7 STIG Version 1 Release 1 dtd 27 Feb 2017
+#############################
+
