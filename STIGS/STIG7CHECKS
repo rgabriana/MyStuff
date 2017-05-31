@@ -7,27 +7,30 @@
 [ -r fonts ] && source fonts
 
 # Root Check
-[ $UID -eq 0 ] && echo -e "$redfont You need admin priveleges to execute this script $reset"
+[ $UID != 0 ] && echo -e "$redfont You need admin priveleges to execute this script $resetfont"
 # Finding / Not a Finding prompts
-
-HEADER=`echo -e "\n#################################################\n"`
 FINDING () {
-echo -e "$redfont This is a finding $resetfont"
+echo -e "RESULTS: $vulid - $redfont This is a finding $resetfont"
 }
 NOTAFINDING () {
-echo -e "$greenfont This is NOT a finding $resetfont"
+echo -e "RESULTS: $vulid - $greenfont This is NOT a finding $resetfont"
 }
-GROUP_TITLE="$bluefontGroup Title:$resetfont"
-RULE_ID="$bluefontRule ID:$resetfont"
-SEVERITY="$bluefontSeverity:$resetfont"
-RULE_VERSION="$bluefontRule Version (STIG-ID):$resetfont"
-RULE_TITLE="$bluefontRule Title:$resetfont"
-VULNERABILITY_DISCUSSION="$bluefontVulnerability Discussion:$resetfont"
-SATISFIES="$bluefontSatisfies:$resetfont"
-CHECK_CONTENT="$bluefontCheck Content:$resetfont"
-
+### LABELS ###
+HEADER=`echo -e "\n#################################################\n"`
+GROUP_TITLE="$bluefont Group Title: $resetfont"
+RULE_ID="$bluefont Rule ID: $resetfont"
+SEVERITY="$bluefont Severity: $resetfont"
+RULE_VERSION="$bluefont Rule Version (STIG-ID): $resetfont"
+RULE_TITLE="$bluefont Rule Title:$resetfont"
+VULNERABILITY_DISCUSSION="$bluefont Vulnerability Discussion: $resetfont"
+SATISFIES="$bluefont Satisfies: $resetfont"
+CHECK_CONTENT="$bluefont Check Content: $resetfont"
+FIX_TEXT="$bluefont Fix Text: $resetfont"
+##################### CHECKS ###########################
 RHEL-07-010010 () {
 vulid=V-71849
+echo -e "
+$HEADER
 $GROUP_TITLE SRG-OS-000257-GPOS-00098\n
 $RULE_ID SV-86473r2_rule\n
 $SEVERITY CAT I\n
@@ -37,30 +40,35 @@ system files and commands must match the vendor values.\n\n
 $VULNERABILITY_DISCUSSION Discretionary access control is weakened if \
 a user or group has access permissions to system files and directories greater than \
 the default.\n
-$SATISFIES SRG-OS-000257-GPOS-00098, SRG-OS-000278-GPOS-00108
-
-
+$SATISFIES SRG-OS-000257-GPOS-00098, SRG-OS-000278-GPOS-00108\n
 $CHECK_CONTENT 
-Verify the file permissions, ownership, and group membership of system files and commands match the vendor values.
+Verify the file permissions, ownership, and group membership of system files and \
+commands match the vendor values.\n
 
-Check the file permissions, ownership, and group membership of system files and commands with the following command:
+Check the file permissions, ownership, and group membership of system files and commands \
+with the following command:\n
 
-# rpm -Va | grep '^.M'
+# rpm -Va | grep '^.M' \n\n"
+CHECK=`rpm -Va|grep '^.M'|awk -F " " '{print $2}'`
 
-If there is any output from the command indicating that the ownership or group of a system file or command, or a system file, has permissions less restrictive than the default, this is a finding.
+if [ -n "$CHECK" ]; then
+  FINDING
+  echo -e "There are output from the command indicating that the ownership or group of\
+  a system file or command, or a system file, has permissions less restrictive than the\
+  default.\n\n $redfont $CHECK $resetfont \n
+  $FIX_TEXT Run the following command to determine which package owns the file:\n
+  \t\t# rpm -qf $redfont<filename>$resetfont\n
 
-Fix Text: Run the following command to determine which package owns the file:
+  Reset the permissions of files within a package with the following command:\n
 
-# rpm -qf <filename>
+  \t\t# rpm --setperms $redfont<packagename>$resetfont\n
 
-Reset the permissions of files within a package with the following command:
+  Reset the user and group ownership of files within a package with the following command:\n
 
-#rpm --setperms <packagename>
-
-Reset the user and group ownership of files within a package with the following command:
-
-#rpm --setugids <packagename>  
-
+  \t\t# rpm --setugids $redfont<packagename>$resetfont\n"
+else
+  NOTAFINDING
+fi
 }
 
 RHEL-07-010020 () {
@@ -88,7 +96,7 @@ Note: System configuration files (indicated by a "c" in the second column) are e
 
 If there is any output from the command for system binaries, this is a finding.
 
-Fix Text: Run the following command to determine which package owns the file:
+$FIX_TEXT Run the following command to determine which package owns the file:
 
 # rpm -qf <filename>
 
@@ -154,7 +162,7 @@ Check the file permissions, ownership, and group membership of system files and 
 
 If there is any output from the command indicating that the ownership or group of a system file or command, or a system file, has permissions less restrictive than the default, this is a finding.
 
-Fix Text: Run the following command to determine which package owns the file:
+$FIX_TEXT Run the following command to determine which package owns the file:
 
 # rpm -qf <filename>
 
@@ -196,7 +204,7 @@ Note: System configuration files (indicated by a "c" in the second column) are e
 
 If there is any output from the command for system binaries, this is a finding.
 
-Fix Text: Run the following command to determine which package owns the file:
+$FIX_TEXT Run the following command to determine which package owns the file:
 
 # rpm -qf <filename>
 
@@ -258,7 +266,7 @@ banner-message-enable=true
 
 If "banner-message-enable" is set to "false" or is missing, this is a finding.
 
-Fix Text: Configure the operating system to display the Standard Mandatory DoD Notice and Consent Banner before granting access to the system.
+$FIX_TEXT Configure the operating system to display the Standard Mandatory DoD Notice and Consent Banner before granting access to the system.
 
 Note: If the system does not have GNOME installed, this requirement is Not Applicable.
 
@@ -334,7 +342,7 @@ By using this IS (which includes any device attached to this IS), you consent to
 
 If the banner does not match the approved Standard Mandatory DoD Notice and Consent Banner, this is a finding.
 
-Fix Text: Configure the operating system to display the approved Standard Mandatory DoD Notice and Consent Banner before granting access to the system.
+$FIX_TEXT Configure the operating system to display the approved Standard Mandatory DoD Notice and Consent Banner before granting access to the system.
 
 Note: If the system does not have GNOME installed, this requirement is Not Applicable.
 
@@ -423,7 +431,7 @@ If the operating system does not display a graphical logon banner or the banner 
 
 If the text in the "/etc/issue" file does not match the Standard Mandatory DoD Notice and Consent Banner, this is a finding.
 
-Fix Text: Configure the operating system to display the Standard Mandatory DoD Notice and Consent Banner before granting access to the system via the command line by editing the "/etc/issue" file.
+$FIX_TEXT Configure the operating system to display the Standard Mandatory DoD Notice and Consent Banner before granting access to the system via the command line by editing the "/etc/issue" file.
 
 Replace the default text with the Standard Mandatory DoD Notice and Consent Banner. The DoD required text is:
 
@@ -473,7 +481,7 @@ lock-enabled=true
 
 If the "lock-enabled" setting is missing or is not set to "true", this is a finding.
 
-Fix Text: Configure the operating system to enable a user's session lock until that user re-establishes access using established identification and authentication procedures.
+$FIX_TEXT Configure the operating system to enable a user's session lock until that user re-establishes access using established identification and authentication procedures.
 
 Create a database to contain the system-wide screensaver settings (if it does not already exist) with the following command:
 
@@ -534,7 +542,7 @@ idle-delay=uint32 900
 
 If the "idle-delay" setting is missing or is not set to "900" or less, this is a finding.
 
-Fix Text: Configure the operating system to initiate a screensaver after a 15-minute period of inactivity for graphical user interfaces.
+$FIX_TEXT Configure the operating system to initiate a screensaver after a 15-minute period of inactivity for graphical user interfaces.
 
 Create a database to contain the system-wide screensaver settings (if it does not already exist) with the following command:
 
@@ -603,7 +611,7 @@ Note: The example below is using the database "local" for the system, so the pat
 
 If the command does not return a result, this is a finding.
 
-Fix Text: Configure the operating system to prevent a user from overriding a session lock after a 15-minute period of inactivity for graphical user interfaces.
+$FIX_TEXT Configure the operating system to prevent a user from overriding a session lock after a 15-minute period of inactivity for graphical user interfaces.
 
 Create a database to contain the system-wide screensaver settings (if it does not already exist) with the following command:
 
@@ -651,7 +659,7 @@ Note: The example below is using the database "local" for the system, so the pat
 
 If the command does not return a result, this is a finding.
 
-Fix Text: Configure the operating system to prevent a user from overriding a screensaver lock after a 15-minute period of inactivity for graphical user interfaces.
+$FIX_TEXT Configure the operating system to prevent a user from overriding a screensaver lock after a 15-minute period of inactivity for graphical user interfaces.
 
 Create a database to contain the system-wide screensaver settings (if it does not already exist) with the following command:
 
@@ -699,7 +707,7 @@ Note: The example below is using the database "local" for the system, so the pat
 
 If the command does not return a result, this is a finding.
 
-Fix Text: Configure the operating system to prevent a user from overriding a session lock after a 15-minute period of inactivity for graphical user interfaces.
+$FIX_TEXT Configure the operating system to prevent a user from overriding a session lock after a 15-minute period of inactivity for graphical user interfaces.
 
 Create a database to contain the system-wide screensaver settings (if it does not already exist) with the following command:
 
@@ -737,7 +745,7 @@ screen-4.3.1-3-x86_64.rpm
 
 If is not installed, this is a finding.
 
-Fix Text: Install the screen package to allow the initiation a session lock after a 15-minute period of inactivity for graphical users interfaces.
+$FIX_TEXT Install the screen package to allow the initiation a session lock after a 15-minute period of inactivity for graphical users interfaces.
 
 Install the screen program (if it is not on the system) with the following command:
 
@@ -773,7 +781,7 @@ If it is installed, GNOME must be configured to enforce a session lock after a 1
 
 If "idle-activation-enabled" is not set to "true", this is a finding.
 
-Fix Text: Configure the operating system to initiate a session lock after a 15-minute period of inactivity for graphical user interfaces.
+$FIX_TEXT Configure the operating system to initiate a session lock after a 15-minute period of inactivity for graphical user interfaces.
 
 Create a database to contain the system-wide screensaver settings (if it does not already exist) with the following command:
 
@@ -813,7 +821,7 @@ lock-delay=uint32 5
 
 If the "lock-delay" setting is missing, or is not set, this is a finding.
 
-Fix Text: Configure the operating system to initiate a session lock for graphical user interfaces when a screensaver is activated.
+$FIX_TEXT Configure the operating system to initiate a session lock for graphical user interfaces when a screensaver is activated.
 
 Create a database to contain the system-wide screensaver settings (if it does not already exist) with the following command:
 
@@ -851,7 +859,7 @@ password required pam_pwquality.so retry=3
 
 If the command does not return a line containing the value "pam_pwquality.so", this is a finding.
 
-Fix Text: Configure the operating system to use "pwquality" to enforce password complexity rules.
+$FIX_TEXT Configure the operating system to use "pwquality" to enforce password complexity rules.
 
 Add the following line to "/etc/pam.d/passwd" (or modify the line to have the required value):
 
@@ -883,7 +891,7 @@ ucredit = -1
 
 If the value of "ucredit" is not set to a negative value, this is a finding.
 
-Fix Text: Configure the operating system to enforce password complexity by requiring that at least one upper-case character be used by setting the "ucredit" option.
+$FIX_TEXT Configure the operating system to enforce password complexity by requiring that at least one upper-case character be used by setting the "ucredit" option.
 
 Add the following line to "/etc/security/pwquality.conf" (or modify the line to have the required value):
 
@@ -915,7 +923,7 @@ lcredit = -1
 
 If the value of "lcredit" is not set to a negative value, this is a finding.
 
-Fix Text: Configure the operating system to lock an account for the maximum period when three unsuccessful logon attempts in 15 minutes are made.
+$FIX_TEXT Configure the operating system to lock an account for the maximum period when three unsuccessful logon attempts in 15 minutes are made.
 
 Modify the first three lines of the "auth" section of the "/etc/pam.d/system-auth-ac" and "/etc/pam.d/password-auth-ac" files to match the following lines:
 
@@ -953,7 +961,7 @@ dcredit = -1
 
 If the value of "dcredit" is not set to a negative value, this is a finding.
 
-Fix Text: Configure the operating system to enforce password complexity by requiring that at least one numeric character be used by setting the "dcredit" option.
+$FIX_TEXT Configure the operating system to enforce password complexity by requiring that at least one numeric character be used by setting the "dcredit" option.
 
 Add the following line to /etc/security/pwquality.conf (or modify the line to have the required value):
 
@@ -987,7 +995,7 @@ ocredit=-1
 
 If the value of "ocredit" is not set to a negative value, this is a finding.
 
-Fix Text: Configure the operating system to enforce password complexity by requiring that at least one special character be used by setting the "dcredit" option.
+$FIX_TEXT Configure the operating system to enforce password complexity by requiring that at least one special character be used by setting the "dcredit" option.
 
 Add the following line to "/etc/security/pwquality.conf" (or modify the line to have the required value):
 
@@ -1019,7 +1027,7 @@ difok = 8
 
 If the value of "difok" is set to less than "8", this is a finding.
 
-Fix Text: Configure the operating system to require the change of at least eight of the total number of characters when passwords are changed by setting the "difok" option.
+$FIX_TEXT Configure the operating system to require the change of at least eight of the total number of characters when passwords are changed by setting the "difok" option.
 
 Add the following line to "/etc/security/pwquality.conf" (or modify the line to have the required value):
 
@@ -1051,7 +1059,7 @@ minclass = 4
 
 If the value of "minclass" is set to less than "4", this is a finding.
 
-Fix Text: Configure the operating system to require the change of at least four character classes when passwords are changed by setting the "minclass" option.
+$FIX_TEXT Configure the operating system to require the change of at least four character classes when passwords are changed by setting the "minclass" option.
 
 Add the following line to "/etc/security/pwquality.conf conf" (or modify the line to have the required value):
 
@@ -1083,7 +1091,7 @@ maxrepeat = 2
 
 If the value of "maxrepeat" is set to more than "2", this is a finding.
 
-Fix Text: Configure the operating system to require the change of the number of repeating consecutive characters when passwords are changed by setting the "maxrepeat" option.
+$FIX_TEXT Configure the operating system to require the change of the number of repeating consecutive characters when passwords are changed by setting the "maxrepeat" option.
 
 Add the following line to "/etc/security/pwquality.conf conf" (or modify the line to have the required value):
 
@@ -1115,7 +1123,7 @@ maxclassrepeat = 4
 
 If the value of "maxclassrepeat" is set to more than "4", this is a finding.
 
-Fix Text: Configure the operating system to require the change of the number of repeating characters of the same character class when passwords are changed by setting the "maxclassrepeat" option.
+$FIX_TEXT Configure the operating system to require the change of the number of repeating characters of the same character class when passwords are changed by setting the "maxclassrepeat" option.
 
 Add the following line to "/etc/security/pwquality.conf" conf (or modify the line to have the required value):
 
@@ -1145,7 +1153,7 @@ password sufficient pam_unix.so sha512
 
 If the "/etc/pam.d/system-auth-ac" configuration files allow for password hashes other than SHA512 to be used, this is a finding.
 
-Fix Text: Configure the operating system to store only SHA512 encrypted representations of passwords.
+$FIX_TEXT Configure the operating system to store only SHA512 encrypted representations of passwords.
 
 Add the following line in "/etc/pam.d/system-auth-ac":
 
@@ -1177,7 +1185,7 @@ ENCRYPT_METHOD SHA512
 
 If the "/etc/login.defs" configuration file does not exist or allows for password hashes other than SHA512 to be used, this is a finding.
 
-Fix Text: Configure the operating system to store only SHA512 encrypted representations of passwords.
+$FIX_TEXT Configure the operating system to store only SHA512 encrypted representations of passwords.
 
 Add or update the following line in "/etc/login.defs":
 
@@ -1208,7 +1216,7 @@ crypt_style = sha512
 
 If the "crypt_style" variable is not set to "sha512", is not in the defaults section, or does not exist, this is a finding.
 
-Fix Text: Configure the operating system to store only SHA512 encrypted representations of passwords.
+$FIX_TEXT Configure the operating system to store only SHA512 encrypted representations of passwords.
 
 Add or update the following line in "/etc/libuser.conf" in the [defaults] section:
 
@@ -1238,7 +1246,7 @@ PASS_MIN_DAYS 1
 
 If the "PASS_MIN_DAYS" parameter value is not "1" or greater, or is commented out, this is a finding.
 
-Fix Text: Configure the operating system to enforce 24 hours/1 day as the minimum password lifetime.
+$FIX_TEXT Configure the operating system to enforce 24 hours/1 day as the minimum password lifetime.
 
 Add the following line in "/etc/login.defs" (or modify the line to have the required value):
 
@@ -1265,7 +1273,7 @@ Check whether the minimum time period between password changes for each user acc
 
 If any results are returned that are not associated with a system account, this is a finding.
 
-Fix Text: Configure non-compliant accounts to enforce a 24 hours/1 day minimum password lifetime:
+$FIX_TEXT Configure non-compliant accounts to enforce a 24 hours/1 day minimum password lifetime:
 
 # chage -m 1 [user]  
 
@@ -1293,7 +1301,7 @@ PASS_MAX_DAYS 60
 
 If the "PASS_MAX_DAYS" parameter value is not 60 or less, or is commented out, this is a finding.
 
-Fix Text: Configure the operating system to enforce a 60-day maximum password lifetime restriction.
+$FIX_TEXT Configure the operating system to enforce a 60-day maximum password lifetime restriction.
 
 Add the following line in "/etc/login.defs" (or modify the line to have the required value):
 
@@ -1320,7 +1328,7 @@ Check whether the maximum time period for existing passwords is restricted to 60
 
 If any results are returned that are not associated with a system account, this is a finding.
 
-Fix Text: Configure non-compliant accounts to enforce a 60-day maximum password lifetime restriction.
+$FIX_TEXT Configure non-compliant accounts to enforce a 60-day maximum password lifetime restriction.
 
 # chage -M 60 [user]  
 
@@ -1348,7 +1356,7 @@ password sufficient pam_unix.so use_authtok sha512 shadow remember=5
 
 If the line containing the "pam_unix.so" line does not have the "remember" module argument set, or the value of the "remember" module argument is set to less than "5", this is a finding.
 
-Fix Text: Configure the operating system to prohibit password reuse for a minimum of five generations.
+$FIX_TEXT Configure the operating system to prohibit password reuse for a minimum of five generations.
 
 Add the following line in "/etc/pam.d/system-auth-ac" (or modify the line to have the required value):
 
@@ -1382,7 +1390,7 @@ minlen = 15
 
 If the command does not return a "minlen" value of 15 or greater, this is a finding.
 
-Fix Text: Configure operating system to enforce a minimum 15-character password length.
+$FIX_TEXT Configure operating system to enforce a minimum 15-character password length.
 
 Add the following line to "/etc/security/pwquality.conf" (or modify the line to have the required value):
 
@@ -1411,7 +1419,7 @@ If this produces any output, it may be possible to log on with accounts with emp
 
 If null passwords can be used, this is a finding.
 
-Fix Text: If an account is configured for password authentication but does not have an assigned password, it may be possible to log on to the account without authenticating.
+$FIX_TEXT If an account is configured for password authentication but does not have an assigned password, it may be possible to log on to the account without authenticating.
 
 Remove any instances of the "nullok" option in "/etc/pam.d/system-auth-ac" to prevent logons with empty passwords and run the "authconfig" command.  
 
@@ -1439,7 +1447,7 @@ If no line, a commented line, or a line indicating the value "no" is returned, t
 
 If the required value is not set, this is a finding.
 
-Fix Text: To explicitly disallow remote logon from accounts with empty passwords, add or correct the following line in "/etc/ssh/sshd_config":
+$FIX_TEXT To explicitly disallow remote logon from accounts with empty passwords, add or correct the following line in "/etc/ssh/sshd_config":
 
 PermitEmptyPasswords no
 
@@ -1469,7 +1477,7 @@ INACTIVE=0
 
 If the value is not set to "0", is commented out, or is not defined, this is a finding.
 
-Fix Text: Configure the operating system to disable account identifiers (individuals, groups, roles, and devices) after the password expires.
+$FIX_TEXT Configure the operating system to disable account identifiers (individuals, groups, roles, and devices) after the password expires.
 
 Add the following line to "/etc/default/useradd" (or modify the line to have the required value):
 
@@ -1502,7 +1510,7 @@ auth [default=die] pam_faillock.so authfail audit deny=3 even_deny_root unlock_t
 
 If the "unlock_time" setting is greater than "604800" on both lines with the "pam_faillock.so" module name or is missing from a line, this is a finding.
 
-Fix Text: Configure the operating system to lock an account for the maximum period when three unsuccessful logon attempts in 15 minutes are made.
+$FIX_TEXT Configure the operating system to lock an account for the maximum period when three unsuccessful logon attempts in 15 minutes are made.
 
 Modify the first three lines of the auth section of the "/etc/pam.d/system-auth-ac" and "/etc/pam.d/password-auth-ac" files to match the following lines:
 
@@ -1537,7 +1545,7 @@ auth [default=die] pam_faillock.so authfail audit deny=3 even_deny_root fail_int
 
 If the "even_deny_root" setting is not defined on both lines with the "pam_faillock.so" module name, this is a finding.
 
-Fix Text: Configure the operating system to automatically lock the root account until the locked account is released by an administrator when three unsuccessful logon attempts in 15 minutes are made.
+$FIX_TEXT Configure the operating system to automatically lock the root account until the locked account is released by an administrator when three unsuccessful logon attempts in 15 minutes are made.
 
 Modify the first three lines of the auth section of the "/etc/pam.d/system-auth-ac" and "/etc/pam.d/password-auth-ac" files to match the following lines:
 
@@ -1574,7 +1582,7 @@ Check the configuration of the "/etc/sudoers" and "/etc/sudoers.d/*" files with 
 
 If any uncommented line is found with a "NOPASSWD" tag, this is a finding.
 
-Fix Text: Configure the operating system to require users to supply a password for privilege escalation.
+$FIX_TEXT Configure the operating system to require users to supply a password for privilege escalation.
 
 Check the configuration of the "/etc/sudoers" and "/etc/sudoers.d/*" files with the following command:
 
@@ -1609,7 +1617,7 @@ Check the configuration of the "/etc/sudoers" and "/etc/sudoers.d/*" files with 
 
 If any line is found with a "!authenticate" tag, this is a finding.
 
-Fix Text: Configure the operating system to require users to reauthenticate for privilege escalation.
+$FIX_TEXT Configure the operating system to require users to reauthenticate for privilege escalation.
 
 Check the configuration of the "/etc/sudoers" and "/etc/sudoers.d/*" files with the following command:
 
@@ -1641,7 +1649,7 @@ FAIL_DELAY 4
 
 If the value of "FAIL_DELAY" is not set to "4" or greater, this is a finding.
 
-Fix Text: Configure the operating system to enforce a delay of at least four seconds between logon prompts following a failed console logon attempt.
+$FIX_TEXT Configure the operating system to enforce a delay of at least four seconds between logon prompts following a failed console logon attempt.
 
 Modify the "/etc/login.defs" file to set the "FAIL_DELAY" parameter to "4" or greater:
 
@@ -1673,7 +1681,7 @@ AutomaticLoginEnable=false
 
 If the value of "AutomaticLoginEnable" is not set to "false", this is a finding.
 
-Fix Text: Configure the operating system to not allow an unattended or automatic logon to the system via a graphical user interface.
+$FIX_TEXT Configure the operating system to not allow an unattended or automatic logon to the system via a graphical user interface.
 
 Note: If the system does not have GNOME installed, this requirement is Not Applicable.
 
@@ -1708,7 +1716,7 @@ TimedLoginEnable=false
 
 If the value of "TimedLoginEnable" is not set to "false", this is a finding.
 
-Fix Text: Configure the operating system to not allow an unrestricted account to log on to the system via a graphical user interface.
+$FIX_TEXT Configure the operating system to not allow an unrestricted account to log on to the system via a graphical user interface.
 
 Note: If the system does not have GNOME installed, this requirement is Not Applicable.
 
@@ -1741,7 +1749,7 @@ PermitUserEnvironment no
 
 If the "PermitUserEnvironment" keyword is not set to "no", is missing, or is commented out, this is a finding.
 
-Fix Text: Configure the operating system to not allow users to override environment variables to the SSH daemon.
+$FIX_TEXT Configure the operating system to not allow users to override environment variables to the SSH daemon.
 
 Edit the "/etc/ssh/sshd_config" file to uncomment or add the line for "PermitUserEnvironment" keyword and set the value to "no":
 
@@ -1773,7 +1781,7 @@ HostbasedAuthentication no
 
 If the "HostbasedAuthentication" keyword is not set to "no", is missing, or is commented out, this is a finding.
 
-Fix Text: Configure the operating system to not allow a non-certificate trusted host SSH logon to the system.
+$FIX_TEXT Configure the operating system to not allow a non-certificate trusted host SSH logon to the system.
 
 Edit the "/etc/ssh/sshd_config" file to uncomment or add the line for "HostbasedAuthentication" keyword and set the value to "no":
 
@@ -1803,7 +1811,7 @@ password_pbkdf2 superusers-account password-hash
 
 If the root password entry does not begin with "password_pbkdf2", this is a finding.
 
-Fix Text: Configure the system to encrypt the boot password for root.
+$FIX_TEXT Configure the system to encrypt the boot password for root.
 
 Generate an encrypted grub2 password for root with the following command:
 
@@ -1847,7 +1855,7 @@ password_pbkdf2 superusers-account password-hash
 
 If the root password entry does not begin with "password_pbkdf2", this is a finding.
 
-Fix Text: Configure the system to encrypt the boot password for root.
+$FIX_TEXT Configure the system to encrypt the boot password for root.
 
 Generate an encrypted grub2 password for root with the following command:
 
@@ -1905,7 +1913,7 @@ The entry for use only smartcard for logon may be enabled, and the smartcard mod
 
 If smartcard authentication is disabled or the smartcard and smartcard removal actions are blank, this is a finding.
 
-Fix Text: Configure the operating system to require individuals to be authenticated with a multifactor authenticator.
+$FIX_TEXT Configure the operating system to require individuals to be authenticated with a multifactor authenticator.
 
 Enable smartcard logons with the following commands:
 
@@ -1945,7 +1953,7 @@ Check to see if the rsh-server package is installed with the following command:
 
 If the rsh-server package is installed, this is a finding.
 
-Fix Text: Configure the operating system to disable non-essential capabilities by removing the rsh-server package from the system with the following command:
+$FIX_TEXT Configure the operating system to disable non-essential capabilities by removing the rsh-server package from the system with the following command:
 
 # yum remove rsh-server  
 
@@ -1972,7 +1980,7 @@ Check to see if the "ypserve" package is installed with the following command:
 
 If the "ypserv" package is installed, this is a finding.
 
-Fix Text: Configure the operating system to disable non-essential capabilities by removing the "ypserv" package from the system with the following command:
+$FIX_TEXT Configure the operating system to disable non-essential capabilities by removing the "ypserv" package from the system with the following command:
 
 # yum remove ypserv  
 
@@ -2012,7 +2020,7 @@ All authorized non-administrative users must be mapped to the "user_u" role or t
 
 If they are not mapped in this way, this is a finding.
 
-Fix Text: Configure the operating system to prevent non-privileged users from executing privileged functions to include disabling, circumventing, or altering implemented security safeguards/countermeasures.
+$FIX_TEXT Configure the operating system to prevent non-privileged users from executing privileged functions to include disabling, circumventing, or altering implemented security safeguards/countermeasures.
 
 Use the following command to map a new user to the "sysdam_u" role:
 
@@ -2077,7 +2085,7 @@ Check the "/etc/cron.daily" subdirectory for a "crontab" file controlling the ex
 
 If the file integrity application does not exist, or a "crontab" file does not exist in the "/etc/cron.daily" or "/etc/cron.weekly" subdirectories, this is a finding.
 
-Fix Text: Configure the file integrity tool to automatically run on the system at least weekly. The following example output is generic. It will set cron to run AIDE daily, but other file integrity tools may be used:
+$FIX_TEXT Configure the file integrity tool to automatically run on the system at least weekly. The following example output is generic. It will set cron to run AIDE daily, but other file integrity tools may be used:
 
 # cat /etc/cron.daily/aide
 0 0 * * * /usr/sbin/aide --check | /bin/mail -s "aide integrity check run for <system name>" root@sysname.mil  
@@ -2123,7 +2131,7 @@ AIDE does not have a configuration that will send a notification, so the cron jo
 
 If the file integrity application does not notify designated personnel of changes, this is a finding.
 
-Fix Text: Configure the operating system to notify designated personnel if baseline configurations are changed in an unauthorized manner. The AIDE tool can be configured to email designated personnel through the use of the cron system.
+$FIX_TEXT Configure the operating system to notify designated personnel if baseline configurations are changed in an unauthorized manner. The AIDE tool can be configured to email designated personnel through the use of the cron system.
 
 The following example output is generic. It will set cron to run AIDE daily and to send email at the completion of the analysis.
 
@@ -2160,7 +2168,7 @@ If "gpgcheck" is not set to "1", or if options are missing or commented out, ask
 
 If there is no process to validate certificates that is approved by the organization, this is a finding.
 
-Fix Text: Configure the operating system to verify the signature of packages from a repository prior to install by setting the following option in the "/etc/yum.conf" file:
+$FIX_TEXT Configure the operating system to verify the signature of packages from a repository prior to install by setting the following option in the "/etc/yum.conf" file:
 
 gpgcheck=1  
 
@@ -2194,7 +2202,7 @@ If "localpkg_gpgcheck" is not set to "1", or if options are missing or commented
 
 If there is no process to validate the signatures of local packages that is approved by the organization, this is a finding.
 
-Fix Text: Configure the operating system to verify the signature of local packages prior to install by setting the following option in the "/etc/yum.conf" file:
+$FIX_TEXT Configure the operating system to verify the signature of local packages prior to install by setting the following option in the "/etc/yum.conf" file:
 
 localpkg_gpgcheck=1  
 
@@ -2228,7 +2236,7 @@ If "repo_gpgcheck" is not set to "1", or if options are missing or commented out
 
 If there is no process to validate the metadata of packages that is approved by the organization, this is a finding.
 
-Fix Text: Configure the operating system to verify the repository metadata by setting the following options in the "/etc/yum.conf" file:
+$FIX_TEXT Configure the operating system to verify the repository metadata by setting the following options in the "/etc/yum.conf" file:
 
 repo_gpgcheck=1  
 
@@ -2261,7 +2269,7 @@ install usb-storage /bin/true
 
 If the command does not return any output, and use of USB storage devices is not documented with the Information System Security Officer (ISSO) as an operational requirement, this is a finding.
 
-Fix Text: Configure the operating system to disable the ability to use USB mass storage devices.
+$FIX_TEXT Configure the operating system to disable the ability to use USB mass storage devices.
 
 Create a file under "/etc/modprobe.d" with the following command:
 
@@ -2305,7 +2313,7 @@ Active: inactive (dead)
 
 If the "autofs" status is set to "active" and is not documented with the Information System Security Officer (ISSO) as an operational requirement, this is a finding.
 
-Fix Text: Configure the operating system to disable the ability to automount devices.
+$FIX_TEXT Configure the operating system to disable the ability to automount devices.
 
 Turn off the automount service with the following command:
 
@@ -2343,7 +2351,7 @@ clean_requirements_on_remove=1
 
 If "clean_requirements_on_remove" is not set to "1", "True", or "yes", or is not set in "/etc/yum.conf", this is a finding.
 
-Fix Text: Configure the operating system to remove all software components after updated versions have been installed.
+$FIX_TEXT Configure the operating system to remove all software components after updated versions have been installed.
 
 Set the "clean_requirements_on_remove" option to "1" in the "/etc/yum.conf" file:
 
@@ -2375,7 +2383,7 @@ Enforcing
 
 If "SELinux" is not active and not in "Enforcing" mode, this is a finding.
 
-Fix Text: Configure the operating system to verify correct operation of all security functions.
+$FIX_TEXT Configure the operating system to verify correct operation of all security functions.
 
 Set the "SELinux" status and the "Enforcing" mode by modifying the "/etc/selinux/config" file to have the following line:
 
@@ -2417,7 +2425,7 @@ Policy from config file: targeted
 
 If the "Policy from config file" is not set to "targeted", or the "Loaded policy name" is not set to "targeted", this is a finding.
 
-Fix Text: Configure the operating system to verify correct operation of all security functions.
+$FIX_TEXT Configure the operating system to verify correct operation of all security functions.
 
 Set the "SELinuxtype" to the "targeted" policy by modifying the "/etc/selinux/config" file to have the following line:
 
@@ -2455,7 +2463,7 @@ Docs: man:systemd.special(7)
 
 If the ctrl-alt-del.service is active, this is a finding.
 
-Fix Text: Configure the system to disable the Ctrl-Alt_Delete sequence for the command line with the following command:
+$FIX_TEXT Configure the system to disable the Ctrl-Alt_Delete sequence for the command line with the following command:
 
 # systemctl mask ctrl-alt-del.target
 
@@ -2494,7 +2502,7 @@ UMASK 077
 
 If the value for the "UMASK" parameter is not "077", or the "UMASK" parameter is missing or is commented out, this is a finding.
 
-Fix Text: Configure the operating system to define default permissions for all authenticated users in such a way that the user can only read and modify their own files.
+$FIX_TEXT Configure the operating system to define default permissions for all authenticated users in such a way that the user can only read and modify their own files.
 
 Add or edit the line for the "UMASK" parameter in "/etc/login.defs" file to "077":
 
@@ -2529,7 +2537,7 @@ Current End of Life for RHEL 7.3 is 30 June 2024.
 
 If the release is not supported by the vendor, this is a finding.
 
-Fix Text: Upgrade to a supported version of the operating system.  
+$FIX_TEXT Upgrade to a supported version of the operating system.  
 
 CCI: CCI-000366
 _____________________________________________________________
@@ -2568,7 +2576,7 @@ Typical update frequency may be overridden by Information Assurance Vulnerabilit
 
 If the operating system is in non-compliance with the Information Assurance Vulnerability Management (IAVM) process, this is a finding.
 
-Fix Text: Install the operating system patches or updated packages available from Red Hat within 30 days or sooner as local policy dictates.  
+$FIX_TEXT Install the operating system patches or updated packages available from Red Hat within 30 days or sooner as local policy dictates.  
 
 CCI: CCI-000366
 _____________________________________________________________
@@ -2605,7 +2613,7 @@ Accounts such as "games" and "gopher" are not authorized accounts as they do not
 
 If the accounts on the system do not match the provided documentation, or accounts that do not support an authorized system function are present, this is a finding.
 
-Fix Text: Configure the system so all accounts on the system are assigned to an active system, application, or user account.
+$FIX_TEXT Configure the system so all accounts on the system are assigned to an active system, application, or user account.
 
 Remove accounts that do not support approved system activities or that allow for a normal user to perform administrative-level actions.
 
@@ -2634,7 +2642,7 @@ Check that all referenced GIDs exist with the following command:
 
 If GIDs referenced in "/etc/passwd" file are returned as not defined in "/etc/group" file, this is a finding.
 
-Fix Text: Configure the system to define all GIDs found in the "/etc/passwd" file by modifying the "/etc/group" file to add any non-existent group referenced in the "/etc/passwd" file, or change the GIDs referenced in the "/etc/passwd" file to a group that exists in "/etc/group".  
+$FIX_TEXT Configure the system to define all GIDs found in the "/etc/passwd" file by modifying the "/etc/group" file to add any non-existent group referenced in the "/etc/passwd" file, or change the GIDs referenced in the "/etc/passwd" file to a group that exists in "/etc/group".  
 
 CCI: CCI-000764
 _____________________________________________________________
@@ -2657,7 +2665,7 @@ Check the system for duplicate UID "0" assignments with the following command:
 
 If any accounts other than root have a UID of "0", this is a finding.
 
-Fix Text: Change the UID of any account on the system, other than root, that has a UID of "0".
+$FIX_TEXT Change the UID of any account on the system, other than root, that has a UID of "0".
 
 If the account is associated with system commands or applications, the UID should be changed to one greater than "0" but less than "1000". Otherwise, assign a UID of greater than "1000" that has not already been assigned.  
 
@@ -2686,7 +2694,7 @@ Note: The value after -fstype must be replaced with the filesystem type. XFS is 
 
 If any files on the system do not have an assigned owner, this is a finding.
 
-Fix Text: Either remove all files and directories from the system that do not have a valid user, or assign a valid user to all unowned files and directories on the system with the "chown" command:
+$FIX_TEXT Either remove all files and directories from the system that do not have a valid user, or assign a valid user to all unowned files and directories on the system with the "chown" command:
 
 # chown <user> <file>  
 
@@ -2715,7 +2723,7 @@ Note: The value after -fstype must be replaced with the filesystem type. XFS is 
 
 If any files on the system do not have an assigned group, this is a finding.
 
-Fix Text: Either remove all files and directories from the system that do not have a valid group, or assign a valid group to all files and directories on the system with the "chgrp" command:
+$FIX_TEXT Either remove all files and directories from the system that do not have a valid group, or assign a valid group to all files and directories on the system with the "chgrp" command:
 
 # chgrp <group> <file>  
 
@@ -2750,7 +2758,7 @@ Ask the System Administrator (SA) if any users found without home directories ar
 
 If any interactive users do not have a home directory assigned, this is a finding.
 
-Fix Text: Assign home directories to all local interactive users that currently do not have a home directory assigned.  
+$FIX_TEXT Assign home directories to all local interactive users that currently do not have a home directory assigned.  
 
 CCI: CCI-000366
 _____________________________________________________________
@@ -2776,7 +2784,7 @@ CREATE_HOME yes
 
 If the value for "CREATE_HOME" parameter is not set to "yes", the line is missing, or the line is commented out, this is a finding.
 
-Fix Text: Configure the operating system to assign home directories to all new local interactive users by setting the "CREATE_HOME" parameter in "/etc/login.defs" to "yes" as follows.
+$FIX_TEXT Configure the operating system to assign home directories to all new local interactive users by setting the "CREATE_HOME" parameter in "/etc/login.defs" to "yes" as follows.
 
 CREATE_HOME yes  
 
@@ -2811,7 +2819,7 @@ user 'smithj': directory '/home/smithj' does not exist
 
 If any home directories referenced in "/etc/passwd" are returned as not defined, this is a finding.
 
-Fix Text: Create home directories to all local interactive users that currently do not have a home directory assigned. Use the following commands to create the user home directory assigned in "/etc/ passwd":
+$FIX_TEXT Create home directories to all local interactive users that currently do not have a home directory assigned. Use the following commands to create the user home directory assigned in "/etc/ passwd":
 
 Note: The example will be for the user smithj, who has a home directory of "/home/smithj", a UID of "smithj", and a Group Identifier (GID) of "users assigned" in "/etc/passwd".
 
@@ -2846,7 +2854,7 @@ Note: This may miss interactive users that have been assigned a privileged User 
 
 If home directories referenced in "/etc/passwd" do not have a mode of "0750" or less permissive, this is a finding.
 
-Fix Text: Change the mode of interactive user’s home directories to "0750". To change the mode of a local interactive user’s home directory, use the following command:
+$FIX_TEXT Change the mode of interactive user’s home directories to "0750". To change the mode of a local interactive user’s home directory, use the following command:
 
 Note: The example will be for the user "smithj".
 
@@ -2878,7 +2886,7 @@ Note: This may miss interactive users that have been assigned a privileged UID. 
 
 If any home directories referenced in "/etc/passwd" are returned as not defined, this is a finding.
 
-Fix Text: Change the owner of a local interactive user’s home directories to that owner. To change the owner of a local interactive user’s home directory, use the following command:
+$FIX_TEXT Change the owner of a local interactive user’s home directories to that owner. To change the owner of a local interactive user’s home directory, use the following command:
 
 Note: The example will be for the user smithj, who has a home directory of "/home/smithj".
 
@@ -2915,7 +2923,7 @@ users:x:250:smithj,jonesj,jacksons
 
 If the user home directory referenced in "/etc/passwd" is not group-owned by that user’s primary GID, this is a finding.
 
-Fix Text: Change the group owner of a local interactive user’s home directory to the group found in "/etc/passwd". To change the group owner of a local interactive user’s home directory, use the following command:
+$FIX_TEXT Change the group owner of a local interactive user’s home directory to the group found in "/etc/passwd". To change the group owner of a local interactive user’s home directory, use the following command:
 
 Note: The example will be for the user "smithj", who has a home directory of "/home/smithj", and has a primary group of users.
 
@@ -2949,7 +2957,7 @@ Note: The example will be for the user "smithj", who has a home directory of "/h
 
 If any files are found with an owner different than the home directory user, this is a finding.
 
-Fix Text: Change the owner of a local interactive user’s files and directories to that owner. To change the owner of a local interactive user’s files and directories, use the following command:
+$FIX_TEXT Change the owner of a local interactive user’s files and directories to that owner. To change the owner of a local interactive user’s files and directories, use the following command:
 
 Note: The example will be for the user smithj, who has a home directory of "/home/smithj".
 
@@ -2989,7 +2997,7 @@ smithj:x:521:smithj
 
 If the user is not a member of a group that group owns file(s) in a local interactive user’s home directory, this is a finding.
 
-Fix Text: Change the group of a local interactive user’s files and directories to a group that the interactive user is a member of. To change the group owner of a local interactive user’s files and directories, use the following command:
+$FIX_TEXT Change the group of a local interactive user’s files and directories to a group that the interactive user is a member of. To change the group owner of a local interactive user’s files and directories, use the following command:
 
 Note: The example will be for the user smithj, who has a home directory of "/home/smithj" and is a member of the users group.
 
@@ -3025,7 +3033,7 @@ Note: The example will be for the user "smithj", who has a home directory of "/h
 
 If any files are found with a mode more permissive than "0750", this is a finding.
 
-Fix Text: Set the mode on files and directories in the local interactive user home directory with the following command:
+$FIX_TEXT Set the mode on files and directories in the local interactive user home directory with the following command:
 
 Note: The example will be for the user smithj, who has a home directory of "/home/smithj" and is a member of the users group.
 
@@ -3059,7 +3067,7 @@ Note: The example will be for the "smithj" user, who has a home directory of "/h
 
 If any file that sets a local interactive user’s environment variables to override the system is not owned by the home directory owner or root, this is a finding.
 
-Fix Text: Set the owner of the local initialization files for interactive users to either the directory owner or root with the following command:
+$FIX_TEXT Set the owner of the local initialization files for interactive users to either the directory owner or root with the following command:
 
 Note: The example will be for the smithj user, who has a home directory of "/home/smithj".
 
@@ -3103,7 +3111,7 @@ Check the group owner of all local interactive users’ initialization files wit
 
 If all local interactive users’ initialization files are not group-owned by that user’s primary GID, this is a finding.
 
-Fix Text: Change the group owner of a local interactive user’s files to the group found in "/etc/passwd" for the user. To change the group owner of a local interactive user home directory, use the following command:
+$FIX_TEXT Change the group owner of a local interactive user’s files to the group found in "/etc/passwd" for the user. To change the group owner of a local interactive user home directory, use the following command:
 
 Note: The example will be for the user smithj, who has a home directory of "/home/smithj", and has a primary group of users.
 
@@ -3137,7 +3145,7 @@ Note: The example will be for the smithj user, who has a home directory of "/hom
 
 If any local initialization files have a mode more permissive than "0740", this is a finding.
 
-Fix Text: Set the mode of the local initialization files to "0740" with the following command:
+$FIX_TEXT Set the mode of the local initialization files to "0740" with the following command:
 
 Note: The example will be for the smithj user, who has a home directory of "/home/smithj".
 
@@ -3170,7 +3178,7 @@ Note: The example will be for the smithj user, which has a home directory of "/h
 
 If any local interactive user initialization files have executable search path statements that include directories outside of their home directory, this is a finding.
 
-Fix Text: Configure the "/etc/fstab" to use the "nosuid" option on file systems that contain user home directories for interactive users.  
+$FIX_TEXT Configure the "/etc/fstab" to use the "nosuid" option on file systems that contain user home directories for interactive users.  
 
 CCI: CCI-000366
 _____________________________________________________________
@@ -3201,7 +3209,7 @@ Note: The example will be for a system that is configured to create users’ hom
 
 If any local initialization files are found to reference world-writable files, this is a finding.
 
-Fix Text: Set the mode on files being executed by the local initialization files with the following command:
+$FIX_TEXT Set the mode on files being executed by the local initialization files with the following command:
 
 # chmod 0755 <file>  
 
@@ -3234,7 +3242,7 @@ Note: There are device files, such as "/dev/vmci", that are used when the operat
 
 If there is output from either of these commands, other than already noted, this is a finding.
 
-Fix Text: Run the following command to determine which package owns the device file:
+$FIX_TEXT Run the following command to determine which package owns the device file:
 
 # rpm -qf <filename>
 
@@ -3291,7 +3299,7 @@ UUID=a411dc99-f2a1-4c87-9e05-184977be8539 /home ext4 rw,relatime,discard,data=or
 
 If a file system found in "/etc/fstab" refers to the user home directory file system and it does not have the "nosuid" option set, this is a finding.
 
-Fix Text: Configure the "/etc/fstab" to use the "nosuid" option on file systems that contain user home directories.  
+$FIX_TEXT Configure the "/etc/fstab" to use the "nosuid" option on file systems that contain user home directories.  
 
 CCI: CCI-000366
 _____________________________________________________________
@@ -3318,7 +3326,7 @@ UUID=2bc871e4-e2a3-4f29-9ece-3be60c835222 /mnt/usbflash vfat noauto,owner,ro,nos
 
 If a file system found in "/etc/fstab" refers to removable media and it does not have the "nosuid" option set, this is a finding.
 
-Fix Text: Configure the "/etc/fstab" to use the "nosuid" option on file systems that are associated with removable media.  
+$FIX_TEXT Configure the "/etc/fstab" to use the "nosuid" option on file systems that are associated with removable media.  
 
 CCI: CCI-000366
 _____________________________________________________________
@@ -3345,7 +3353,7 @@ UUID=e06097bb-cfcd-437b-9e4d-a691f5662a7d /store nfs rw,nosuid 0 0
 
 If a file system found in "/etc/fstab" refers to NFS and it does not have the "nosuid" option set, this is a finding.
 
-Fix Text: Configure the "/etc/fstab" to use the "nosuid" option on file systems that are being exported via NFS.  
+$FIX_TEXT Configure the "/etc/fstab" to use the "nosuid" option on file systems that are being exported via NFS.  
 
 CCI: CCI-000366
 _____________________________________________________________
@@ -3372,7 +3380,7 @@ UUID=e06097bb-cfcd-437b-9e4d-a691f5662a7d /store nfs rw,noexec 0 0
 
 If a file system found in "/etc/fstab" refers to NFS and it does not have the "noexec" option set, and use of NFS exported binaries is not documented with the Information System Security Officer (ISSO) as an operational requirement, this is a finding.
 
-Fix Text: Configure the "/etc/fstab" to use the "noexec" option on file systems that are being exported via NFS.  
+$FIX_TEXT Configure the "/etc/fstab" to use the "noexec" option on file systems that are being exported via NFS.  
 
 CCI: CCI-000366
 _____________________________________________________________
@@ -3404,7 +3412,7 @@ drwxrwxrwt. 14 root root 4096 Aug 26 13:29 /tmp
 
 If any world-writable directories are not owned by root, sys, bin, or an application group associated with the directory, this is a finding.
 
-Fix Text: Change the group of the world-writable directories to root with the following command:
+$FIX_TEXT Change the group of the world-writable directories to root with the following command:
 
 # chgrp root <directory>  
 
@@ -3435,7 +3443,7 @@ Note: The example is for a system that is configured to create users home direct
 
 If any local interactive user initialization files are found to have a umask statement that has a value less restrictive than "077", this is a finding.
 
-Fix Text: Remove the umask statement from all local interactive users’ initialization files.
+$FIX_TEXT Remove the umask statement from all local interactive users’ initialization files.
 
 If the account is for an application, the requirement for a umask less restrictive than "077" can be documented with the Information System Security Officer, but the user agreement for access to the account must specify that the local interactive user must log on to their account first and then switch the user to the application account with the correct option to gain the account’s environment variables.  
 
@@ -3487,7 +3495,7 @@ If "rsyslog" is not logging messages for the cron facility or all facilities, th
 
 If the entry is in the "/etc/rsyslog.conf" file but is after the entry "*.*", this is a finding.
 
-Fix Text: Configure "rsyslog" to log all cron messages by adding or updating the following line to "/etc/rsyslog.conf":
+$FIX_TEXT Configure "rsyslog" to log all cron messages by adding or updating the following line to "/etc/rsyslog.conf":
 
 cron.* /var/log/cron.log
 
@@ -3519,7 +3527,7 @@ Check the owner of the "cron.allow" file with the following command:
 
 If the "cron.allow" file exists and has an owner other than root, this is a finding.
 
-Fix Text: Set the owner on the "/etc/cron.allow" file to root with the following command:
+$FIX_TEXT Set the owner on the "/etc/cron.allow" file to root with the following command:
 
 # chown root /etc/cron.allow  
 
@@ -3547,7 +3555,7 @@ Check the group owner of the "cron.allow" file with the following command:
 
 If the "cron.allow" file exists and has a group owner other than root, this is a finding.
 
-Fix Text: Set the group owner on the "/etc/cron.allow" file to root with the following command:
+$FIX_TEXT Set the group owner on the "/etc/cron.allow" file to root with the following command:
 
 # chgrp root /etc/cron.allow  
 
@@ -3581,7 +3589,7 @@ If the "kdump" service is active, ask the System Administrator if the use of the
 
 If the service is active and is not documented, this is a finding.
 
-Fix Text: If kernel core dumps are not required, disable the "kdump" service with the following command:
+$FIX_TEXT If kernel core dumps are not required, disable the "kdump" service with the following command:
 
 # systemctl disable kdump.service
 
@@ -3623,7 +3631,7 @@ UUID=333ada18 /home ext4 noatime,nobarrier,nodev 1 2
 
 If a separate entry for the file system/partition that contains the non-privileged interactive users' home directories does not exist, this is a finding.
 
-Fix Text: Migrate the "/home" directory onto a separate file system/partition.  
+$FIX_TEXT Migrate the "/home" directory onto a separate file system/partition.  
 
 CCI: CCI-000366
 _____________________________________________________________
@@ -3649,7 +3657,7 @@ UUID=c274f65f /var ext4 noatime,nobarrier 1 2
 
 If a separate entry for "/var" is not in use, this is a finding.
 
-Fix Text: Migrate the "/var" path onto a separate file system.  
+$FIX_TEXT Migrate the "/var" path onto a separate file system.  
 
 CCI: CCI-000366
 _____________________________________________________________
@@ -3694,7 +3702,7 @@ All=p+i+n+u+g+s+m+S+sha512+acl+xattrs+selinux
 
 If the "sha512" rule is not being used on all selection lines in the "/etc/aide.conf" file, or another file integrity tool is not using FIPS 140-2 approved cryptographic hashes for validating file contents and directories, this is a finding.
 
-Fix Text: Migrate the system audit data path onto a separate file system.  
+$FIX_TEXT Migrate the system audit data path onto a separate file system.  
 
 CCI: CCI-000366
 _____________________________________________________________
@@ -3720,7 +3728,7 @@ enabled
 
 If the "tmp.mount" service is not enabled, this is a finding.
 
-Fix Text: Start the "tmp.mount" service with the following command:
+$FIX_TEXT Start the "tmp.mount" service with the following command:
 
 # systemctl enable tmp.mount  
 
@@ -3763,7 +3771,7 @@ If the kernel command line is configured to use FIPS mode, check to see if the s
 
 If a "dracut-fips" package is not installed, the kernel command line does not have a fips entry, or the system has a value of "0" for "fips_enabled" in "/proc/sys/crypto", this is a finding.
 
-Fix Text: Configure the operating system to implement DoD-approved encryption by installing the dracut-fips package.
+$FIX_TEXT Configure the operating system to implement DoD-approved encryption by installing the dracut-fips package.
 
 To enable strict FIPS compliance, the fips=1 kernel option needs to be added to the kernel command line during system installation so key generation is done with FIPS-approved algorithms and continuous monitoring tests in place.
 
@@ -3864,7 +3872,7 @@ All= p+i+n+u+g+s+m+S+sha512+acl+xattrs+selinux
 
 If the "acl" rule is not being used on all selection lines in the "/etc/aide.conf" file, or ACLs are not being checked by another file integrity tool, this is a finding.
 
-Fix Text: Configure the file integrity tool to check file and directory ACLs.
+$FIX_TEXT Configure the file integrity tool to check file and directory ACLs.
 
 If AIDE is installed, ensure the "acl" rule is present on all file and directory selection lists.  
 
@@ -3909,7 +3917,7 @@ All= p+i+n+u+g+s+m+S+sha512+acl+xattrs+selinux
 
 If the "xattrs" rule is not being used on all selection lines in the "/etc/aide.conf" file, or extended attributes are not being checked by another file integrity tool, this is a finding.
 
-Fix Text: Configure the file integrity tool to check file and directory extended attributes.
+$FIX_TEXT Configure the file integrity tool to check file and directory extended attributes.
 
 If AIDE is installed, ensure the "xattrs" rule is present on all file and directory selection lists.  
 
@@ -3956,7 +3964,7 @@ All=p+i+n+u+g+s+m+S+sha512+acl+xattrs+selinux
 
 If the "sha512" rule is not being used on all selection lines in the "/etc/aide.conf" file, or another file integrity tool is not using FIPS 140-2 approved cryptographic hashes for validating file contents and directories, this is a finding.
 
-Fix Text: Configure the file integrity tool to use FIPS 140-2 cryptographic hashes for validating file and directory contents.
+$FIX_TEXT Configure the file integrity tool to use FIPS 140-2 cryptographic hashes for validating file and directory contents.
 
 If AIDE is installed, ensure the "sha512" rule is present on all file and directory selection lists.  
 
@@ -3995,7 +4003,7 @@ set root=(hd0,1)
 
 If the system is using an alternate boot loader on removable media, and documentation does not exist approving the alternate configuration, this is a finding.
 
-Fix Text: Remove alternate methods of booting the system from removable media or document the configuration to boot from removable media with the ISSO.  
+$FIX_TEXT Remove alternate methods of booting the system from removable media or document the configuration to boot from removable media with the ISSO.  
 
 CCI: CCI-000318
 
@@ -4040,7 +4048,7 @@ Check to see if the telnet-server package is installed with the following comman
 
 If the telnet-server package is installed, this is a finding.
 
-Fix Text: Configure the operating system to disable non-essential capabilities by removing the telnet-server package from the system with the following command:
+$FIX_TEXT Configure the operating system to disable non-essential capabilities by removing the telnet-server package from the system with the following command:
 
 # yum remove telnet-server  
 
@@ -4074,7 +4082,7 @@ Active: active (running) since Tue 2015-01-27 19:41:23 EST; 22h ago
 
 If the "auditd" status is not active, this is a finding.
 
-Fix Text: Configure the operating system to produce audit records containing information to establish when (date and time) the events occurred.
+$FIX_TEXT Configure the operating system to produce audit records containing information to establish when (date and time) the events occurred.
 
 Enable the auditd service with the following command:
 
@@ -4121,7 +4129,7 @@ If the "-f" flag is set to any value other than "1" or "2", this is a CAT II fin
 
 If the "-f" flag is set to "1" but the availability concern is not documented or there is no monitoring of the kernel log, this is a CAT III finding.
 
-Fix Text: Configure the operating system to shut down in the event of an audit processing failure.
+$FIX_TEXT Configure the operating system to shut down in the event of an audit processing failure.
 
 Add or correct the option to shut down the operating system with the following command:
 
@@ -4165,7 +4173,7 @@ If a remote server is not configured, or the line is commented out, ask the Syst
 
 If there is no evidence that the audit logs are being off-loaded to another system or media, this is a finding.
 
-Fix Text: Configure the operating system to off-load audit records onto a different system or media from the system being audited.
+$FIX_TEXT Configure the operating system to off-load audit records onto a different system or media from the system being audited.
 
 Set the remote server option in "/etc/audisp/audisp-remote.conf" with the IP address of the log aggregation server.  
 
@@ -4199,7 +4207,7 @@ If the value of the "enable_krb5" option is not set to "yes" or the line is comm
 
 If there is no evidence that the transfer of the audit logs being off-loaded to another system or media is encrypted, this is a finding.
 
-Fix Text: Configure the operating system to encrypt the transfer of off-loaded audit records onto a different system or media from the system being audited.
+$FIX_TEXT Configure the operating system to encrypt the transfer of off-loaded audit records onto a different system or media from the system being audited.
 
 Uncomment the "enable_krb5" option in "/etc/audisp/audisp-remote.conf" and set it with the following line:
 
@@ -4236,7 +4244,7 @@ If the value of the "network_failure_action" option is not "syslog", "single", o
 
 If the value of the "disk_full_action" option is not "syslog", "single", or "halt", or the line is commented out, this is a finding.
 
-Fix Text: Configure the action the operating system takes if the disk the audit records are written to becomes full.
+$FIX_TEXT Configure the action the operating system takes if the disk the audit records are written to becomes full.
 
 Uncomment or edit the "disk_full_action" option in "/etc/audisp/audisp-remote.conf" and set it to "syslog", "single", or "halt", such as the following line:
 
@@ -4268,7 +4276,7 @@ network_failure_action = stop
 
 If the value of the "network_failure_action" option is not "syslog", "single", or "halt", or the line is commented out, this is a finding.
 
-Fix Text: Configure the action the operating system takes if there is an error sending audit records to a remote system.
+$FIX_TEXT Configure the action the operating system takes if there is an error sending audit records to a remote system.
 
 Uncomment the "network_failure_action" option in "/etc/audisp/audisp-remote.conf" and set it to "syslog", "single", or "halt".
 
@@ -4313,7 +4321,7 @@ space_left = 225
 
 If the value of the "space_left" keyword is not set to 25 percent of the total partition size, this is a finding.
 
-Fix Text: Configure the operating system to immediately notify the SA and ISSO (at a minimum) when allocated audit record storage volume reaches 75 percent of the repository maximum audit record storage capacity.
+$FIX_TEXT Configure the operating system to immediately notify the SA and ISSO (at a minimum) when allocated audit record storage volume reaches 75 percent of the repository maximum audit record storage capacity.
 
 Check the system configuration to determine the partition the audit records are being written to:
 
@@ -4349,7 +4357,7 @@ space_left_action = email
 
 If the value of the "space_left_action" keyword is not set to "email", this is a finding.
 
-Fix Text: Configure the operating system to immediately notify the SA and ISSO (at a minimum) when the threshold for the repository maximum audit record storage capacity is reached.
+$FIX_TEXT Configure the operating system to immediately notify the SA and ISSO (at a minimum) when the threshold for the repository maximum audit record storage capacity is reached.
 
 Uncomment or edit the "space_left_action" keyword in "/etc/audit/auditd.conf" and set it to "email".
 
@@ -4379,7 +4387,7 @@ action_mail_acct = root
 
 If the value of the "action_mail_acct" keyword is not set to "root" and other accounts for security personnel, this is a finding.
 
-Fix Text: Configure the operating system to immediately notify the SA and ISSO (at a minimum) when the threshold for the repository maximum audit record storage capacity is reached.
+$FIX_TEXT Configure the operating system to immediately notify the SA and ISSO (at a minimum) when the threshold for the repository maximum audit record storage capacity is reached.
 
 Uncomment or edit the "action_mail_acct" keyword in "/etc/audit/auditd.conf" and set it to root and any other accounts associated with security personnel.
 
@@ -4414,7 +4422,7 @@ All "setuid" and "setgid" files on the system must have a corresponding audit ru
 
 If all "setuid"/"setgid" files on the system do not have audit rule coverage, this is a finding.
 
-Fix Text: Configure the operating system to audit the execution of privileged functions.
+$FIX_TEXT Configure the operating system to audit the execution of privileged functions.
 
 To find the relevant "setuid"/"setgid" programs, run the following command for each local partition [PART]:
 
@@ -4457,7 +4465,7 @@ Note: The output lines of the command are duplicated to cover both 32-bit and 64
 
 If the command does not return any output, this is a finding.
 
-Fix Text: Add or update the following rule in "/etc/audit/rules.d/audit.rules" (removing those that do not match the CPU architecture):
+$FIX_TEXT Add or update the following rule in "/etc/audit/rules.d/audit.rules" (removing those that do not match the CPU architecture):
 
 -a always,exit -F arch=b32 -S chown -F auid>=1000 -F auid!=4294967295 -k perm_mod
 
@@ -4501,7 +4509,7 @@ Note: The output lines of the command are duplicated to cover both 32-bit and 64
 
 If the command does not return any output, this is a finding.
 
-Fix Text: Add or update the following rule in "/etc/audit/rules.d/audit.rules" (removing those that do not match the CPU architecture):
+$FIX_TEXT Add or update the following rule in "/etc/audit/rules.d/audit.rules" (removing those that do not match the CPU architecture):
 
 -a always,exit -F arch=b32 -S fchown -F auid>=1000 -F auid!=4294967295 -k perm_mod
 
@@ -4545,7 +4553,7 @@ Note: The output lines of the command are duplicated to cover both 32-bit and 64
 
 If the command does not return any output, this is a finding.
 
-Fix Text: Add or update the following rule in "/etc/audit/rules.d/audit.rules" (removing those that do not match the CPU architecture):
+$FIX_TEXT Add or update the following rule in "/etc/audit/rules.d/audit.rules" (removing those that do not match the CPU architecture):
 
 -a always,exit -F arch=b32 -S lchown -F auid>=1000 -F auid!=4294967295 -k perm_mod
 
@@ -4589,7 +4597,7 @@ Note: The output lines of the command are duplicated to cover both 32-bit and 64
 
 If the command does not return any output, this is a finding.
 
-Fix Text: Add or update the following rule in "/etc/audit/rules.d/audit.rules" (removing those that do not match the CPU architecture):
+$FIX_TEXT Add or update the following rule in "/etc/audit/rules.d/audit.rules" (removing those that do not match the CPU architecture):
 
 -a always,exit -F arch=b32 -S fchownat -F auid>=1000 -F auid!=4294967295 -k perm_mod
 
@@ -4633,7 +4641,7 @@ Note: The output lines of the command are duplicated to cover both 32-bit and 64
 
 If the command does not return any output, this is a finding.
 
-Fix Text: Configure the operating system to generate audit records when successful/unsuccessful attempts to use the "chmod" command occur.
+$FIX_TEXT Configure the operating system to generate audit records when successful/unsuccessful attempts to use the "chmod" command occur.
 
 Add or update the following rule in "/etc/audit/rules.d/audit.rules" (removing those that do not match the CPU architecture):
 
@@ -4676,7 +4684,7 @@ Note: The output lines of the command are duplicated to cover both 32-bit and 64
 
 If the command does not return any output, this is a finding.
 
-Fix Text: Configure the operating system to generate audit records when successful/unsuccessful attempts to use the "fchmod" command occur.
+$FIX_TEXT Configure the operating system to generate audit records when successful/unsuccessful attempts to use the "fchmod" command occur.
 
 Add or update the following rule in "/etc/audit/rules.d/audit.rules" (removing those that do not match the CPU architecture):
 
@@ -4719,7 +4727,7 @@ Note: The output lines of the command are duplicated to cover both 32-bit and 64
 
 If the command does not return any output, this is a finding.
 
-Fix Text: Configure the operating system to generate audit records when successful/unsuccessful attempts to use the "fchmodat" command occur.
+$FIX_TEXT Configure the operating system to generate audit records when successful/unsuccessful attempts to use the "fchmodat" command occur.
 
 Add or update the following rule in "/etc/audit/rules.d/audit.rules" (removing those that do not match the CPU architecture):
 
@@ -4762,7 +4770,7 @@ Note: The output lines of the command are duplicated to cover both 32-bit and 64
 
 If the command does not return any output, this is a finding.
 
-Fix Text: Configure the operating system to generate audit records when successful/unsuccessful attempts to use the "setxattr" command occur.
+$FIX_TEXT Configure the operating system to generate audit records when successful/unsuccessful attempts to use the "setxattr" command occur.
 
 Add or update the following rule in "/etc/audit/rules.d/audit.rules" (removing those that do not match the CPU architecture):
 
@@ -4805,7 +4813,7 @@ Note: The output lines of the command are duplicated to cover both 32-bit and 64
 
 If the command does not return any output, this is a finding.
 
-Fix Text: Configure the operating system to generate audit records when successful/unsuccessful attempts to use the "fsetxattr" command occur.
+$FIX_TEXT Configure the operating system to generate audit records when successful/unsuccessful attempts to use the "fsetxattr" command occur.
 
 Add or update the following rule in "/etc/audit/rules.d/audit.rules" (removing those that do not match the CPU architecture):
 
@@ -4848,7 +4856,7 @@ Note: The output lines of the command are duplicated to cover both 32-bit and 64
 
 If the command does not return any output, this is a finding.
 
-Fix Text: Configure the operating system to generate audit records when successful/unsuccessful attempts to use the "lsetxattr" command occur.
+$FIX_TEXT Configure the operating system to generate audit records when successful/unsuccessful attempts to use the "lsetxattr" command occur.
 
 Add or update the following rule in "/etc/audit/rules.d/audit.rules" (removing those that do not match the CPU architecture):
 
@@ -4891,7 +4899,7 @@ Note: The output lines of the command are duplicated to cover both 32-bit and 64
 
 If the command does not return any output, this is a finding.
 
-Fix Text: Configure the operating system to generate audit records when successful/unsuccessful attempts to use the "removexattr" command occur.
+$FIX_TEXT Configure the operating system to generate audit records when successful/unsuccessful attempts to use the "removexattr" command occur.
 
 Add or update the following rule in "/etc/audit/rules.d/audit.rules" (removing those that do not match the CPU architecture):
 
@@ -4934,7 +4942,7 @@ Note: The output lines of the command are duplicated to cover both 32-bit and 64
 
 If the command does not return any output, this is a finding.
 
-Fix Text: Configure the operating system to generate audit records when successful/unsuccessful attempts to use the "fremovexattr" command occur.
+$FIX_TEXT Configure the operating system to generate audit records when successful/unsuccessful attempts to use the "fremovexattr" command occur.
 
 Add or update the following rule in "/etc/audit/rules.d/audit.rules" (removing those that do not match the CPU architecture):
 
@@ -4977,7 +4985,7 @@ Note: The output lines of the command are duplicated to cover both 32-bit and 64
 
 If the command does not return any output, this is a finding.
 
-Fix Text: Configure the operating system to generate audit records when successful/unsuccessful attempts to use the "lremovexattr" command occur.
+$FIX_TEXT Configure the operating system to generate audit records when successful/unsuccessful attempts to use the "lremovexattr" command occur.
 
 Add or update the following rule in "/etc/audit/rules.d/audit.rules" (removing those that do not match the CPU architecture):
 
@@ -5020,7 +5028,7 @@ Note: The output lines of the command are duplicated to cover both 32-bit and 64
 
 If the command does not return any output, this is a finding.
 
-Fix Text: Configure the operating system to generate audit records when successful/unsuccessful attempts to use the "creat" command occur.
+$FIX_TEXT Configure the operating system to generate audit records when successful/unsuccessful attempts to use the "creat" command occur.
 
 Add or update the following rule in "/etc/audit/rules.d/audit.rules" (removing those that do not match the CPU architecture):
 
@@ -5066,7 +5074,7 @@ Note: The output lines of the command are duplicated to cover both 32-bit and 64
 
 If the command does not return any output, this is a finding.
 
-Fix Text: Configure the operating system to generate audit records when successful/unsuccessful attempts to use the "open" command occur.
+$FIX_TEXT Configure the operating system to generate audit records when successful/unsuccessful attempts to use the "open" command occur.
 
 Add or update the following rule in "/etc/audit/rules.d/audit.rules" (removing those that do not match the CPU architecture):
 
@@ -5112,7 +5120,7 @@ Note: The output lines of the command are duplicated to cover both 32-bit and 64
 
 If the command does not return any output, this is a finding.
 
-Fix Text: Configure the operating system to generate audit records when successful/unsuccessful attempts to use the "openat" command occur.
+$FIX_TEXT Configure the operating system to generate audit records when successful/unsuccessful attempts to use the "openat" command occur.
 
 Add or update the following rule in "/etc/audit/rules.d/audit.rules" (removing those that do not match the CPU architecture):
 
@@ -5158,7 +5166,7 @@ Note: The output lines of the command are duplicated to cover both 32-bit and 64
 
 If the command does not return any output, this is a finding.
 
-Fix Text: Configure the operating system to generate audit records when successful/unsuccessful attempts to use the "open_by_handle_at" command occur.
+$FIX_TEXT Configure the operating system to generate audit records when successful/unsuccessful attempts to use the "open_by_handle_at" command occur.
 
 Add or update the following rule in "/etc/audit/rules.d/audit.rules" (removing those that do not match the CPU architecture):
 
@@ -5204,7 +5212,7 @@ Note: The output lines of the command are duplicated to cover both 32-bit and 64
 
 If the command does not return any output, this is a finding.
 
-Fix Text: Configure the operating system to generate audit records when successful/unsuccessful attempts to use the "truncate" command occur.
+$FIX_TEXT Configure the operating system to generate audit records when successful/unsuccessful attempts to use the "truncate" command occur.
 
 Add or update the following rule in "/etc/audit/rules.d/audit.rules" (removing those that do not match the CPU architecture):
 
@@ -5250,7 +5258,7 @@ Note: The output lines of the command are duplicated to cover both 32-bit and 64
 
 If the command does not return any output, this is a finding.
 
-Fix Text: Configure the operating system to generate audit records when successful/unsuccessful attempts to use the "ftruncate" command occur.
+$FIX_TEXT Configure the operating system to generate audit records when successful/unsuccessful attempts to use the "ftruncate" command occur.
 
 Add or update the following rule in "/etc/audit/rules.d/audit.rules" (removing those that do not match the CPU architecture):
 
@@ -5292,7 +5300,7 @@ Check the file system rule in "/etc/audit/audit.rules" with the following comman
 
 If the command does not return any output, this is a finding.
 
-Fix Text: Configure the operating system to generate audit records when successful/unsuccessful attempts to use the "semanage" command occur.
+$FIX_TEXT Configure the operating system to generate audit records when successful/unsuccessful attempts to use the "semanage" command occur.
 
 Add or update the following rule in "/etc/audit/rules.d/audit.rules":
 
@@ -5332,7 +5340,7 @@ Check the file system rule in "/etc/audit/audit.rules" with the following comman
 
 If the command does not return any output, this is a finding.
 
-Fix Text: Configure the operating system to generate audit records when successful/unsuccessful attempts to use the "setsebool" command occur.
+$FIX_TEXT Configure the operating system to generate audit records when successful/unsuccessful attempts to use the "setsebool" command occur.
 
 Add or update the following rule in "/etc/audit/rules.d/audit.rules":
 
@@ -5372,7 +5380,7 @@ Check the file system rule in "/etc/audit/audit.rules" with the following comman
 
 If the command does not return any output, this is a finding.
 
-Fix Text: Configure the operating system to generate audit records when successful/unsuccessful attempts to use the "chcon" command occur.
+$FIX_TEXT Configure the operating system to generate audit records when successful/unsuccessful attempts to use the "chcon" command occur.
 
 Add or update the following rule in "/etc/audit/rules.d/audit.rules":
 
@@ -5412,7 +5420,7 @@ Check the file system rule in "/etc/audit/audit.rules" with the following comman
 
 If the command does not return any output, this is a finding.
 
-Fix Text: Configure the operating system to generate audit records when successful/unsuccessful attempts to use the "restorecon" command occur.
+$FIX_TEXT Configure the operating system to generate audit records when successful/unsuccessful attempts to use the "restorecon" command occur.
 
 Add or update the following rule in "/etc/audit/rules.d/audit.rules":
 
@@ -5452,7 +5460,7 @@ Check the file system rule in "/etc/audit/audit.rules" with the following comman
 
 If the command does not return any output, this is a finding.
 
-Fix Text: Configure the operating system to generate audit records when successful/unsuccessful account access count events occur.
+$FIX_TEXT Configure the operating system to generate audit records when successful/unsuccessful account access count events occur.
 
 Add or update the following rule in "/etc/audit/rules.d/audit.rules":
 
@@ -5495,7 +5503,7 @@ Check the file system rule in "/etc/audit/audit.rules" with the following comman
 
 If the command does not return any output, this is a finding.
 
-Fix Text: Configure the operating system to generate audit records when unsuccessful account access events occur.
+$FIX_TEXT Configure the operating system to generate audit records when unsuccessful account access events occur.
 
 Add or update the following rule in "/etc/audit/rules.d/audit.rules":
 
@@ -5538,7 +5546,7 @@ Check the file system rules in "/etc/audit/audit.rules" with the following comma
 
 If the command does not return any output, this is a finding.
 
-Fix Text: Configure the operating system to generate audit records when successful account access events occur.
+$FIX_TEXT Configure the operating system to generate audit records when successful account access events occur.
 
 Add or update the following rule in "/etc/audit/rules.d/audit.rules":
 
@@ -5581,7 +5589,7 @@ Check the file system rule in "/etc/audit/audit.rules" with the following comman
 
 If the command does not return any output, this is a finding.
 
-Fix Text: Configure the operating system to generate audit records when successful/unsuccessful attempts to use the "passwd" command occur.
+$FIX_TEXT Configure the operating system to generate audit records when successful/unsuccessful attempts to use the "passwd" command occur.
 
 Add or update the following rule in "/etc/audit/rules.d/audit.rules":
 
@@ -5624,7 +5632,7 @@ Check the file system rule in "/etc/audit/audit.rules" with the following comman
 
 If the command does not return any output, this is a finding.
 
-Fix Text: Configure the operating system to generate audit records when successful/unsuccessful attempts to use the "unix_chkpwd" command occur.
+$FIX_TEXT Configure the operating system to generate audit records when successful/unsuccessful attempts to use the "unix_chkpwd" command occur.
 
 Add or update the following rule in "/etc/audit/rules.d/audit.rules":
 
@@ -5667,7 +5675,7 @@ Check the file system rule in "/etc/audit/audit.rules" with the following comman
 
 If the command does not return any output, this is a finding.
 
-Fix Text: Configure the operating system to generate audit records when successful/unsuccessful attempts to use the "gpasswd" command occur.
+$FIX_TEXT Configure the operating system to generate audit records when successful/unsuccessful attempts to use the "gpasswd" command occur.
 
 Add or update the following rule in "/etc/audit/rules.d/audit.rules":
 
@@ -5710,7 +5718,7 @@ Check the file system rule in "/etc/audit/audit.rules" with the following comman
 
 If the command does not return any output, this is a finding.
 
-Fix Text: Configure the operating system to generate audit records when successful/unsuccessful attempts to use the "chage" command occur.
+$FIX_TEXT Configure the operating system to generate audit records when successful/unsuccessful attempts to use the "chage" command occur.
 
 Add or update the following rule in "/etc/audit/rules.d/audit.rules":
 
@@ -5753,7 +5761,7 @@ Check the file system rule in "/etc/audit/audit.rules" with the following comman
 
 If the command does not return any output, this is a finding.
 
-Fix Text: Configure the operating system to generate audit records when successful/unsuccessful attempts to use the "userhelper" command occur.
+$FIX_TEXT Configure the operating system to generate audit records when successful/unsuccessful attempts to use the "userhelper" command occur.
 
 Add or update the following rule in "/etc/audit/rules.d/audit.rules":
 
@@ -5796,7 +5804,7 @@ Check for the following system call being audited by performing the following co
 
 If the command does not return any output, this is a finding.
 
-Fix Text: Configure the operating system to generate audit records when successful/unsuccessful attempts to use the "su" command occur.
+$FIX_TEXT Configure the operating system to generate audit records when successful/unsuccessful attempts to use the "su" command occur.
 
 Add or update the following rule in "/etc/audit/rules.d/audit.rules":
 
@@ -5842,7 +5850,7 @@ Check for the following system calls being audited by performing the following c
 
 If the command does not return any output, this is a finding.
 
-Fix Text: Configure the operating system to generate audit records when successful/unsuccessful attempts to use the "sudo" command occur.
+$FIX_TEXT Configure the operating system to generate audit records when successful/unsuccessful attempts to use the "sudo" command occur.
 
 Add or update the following rule in "/etc/audit/rules.d/audit.rules":
 
@@ -5892,7 +5900,7 @@ Check for modification of the following files being audited by performing the fo
 
 If the commands do not return output that does not match the examples, this is a finding.
 
-Fix Text: Configure the operating system to generate audit records when successful/unsuccessful attempts to use the "sudoer" command occur.
+$FIX_TEXT Configure the operating system to generate audit records when successful/unsuccessful attempts to use the "sudoer" command occur.
 
 Add or update the following rule in "/etc/audit/rules.d/audit.rules":
 
@@ -5940,7 +5948,7 @@ Check for the following system call being audited by performing the following co
 
 If the command does not return any output, this is a finding.
 
-Fix Text: Configure the operating system to generate audit records when successful/unsuccessful attempts to use the "newgrp" command occur.
+$FIX_TEXT Configure the operating system to generate audit records when successful/unsuccessful attempts to use the "newgrp" command occur.
 
 Add or update the following rule in "/etc/audit/rules.d/audit.rules":
 
@@ -5986,7 +5994,7 @@ Check for the following system call being audited by performing the following co
 
 If the command does not return any output, this is a finding.
 
-Fix Text: Configure the operating system to generate audit records when successful/unsuccessful attempts to use the "chsh" command occur.
+$FIX_TEXT Configure the operating system to generate audit records when successful/unsuccessful attempts to use the "chsh" command occur.
 
 Add or update the following rule in "/etc/audit/rules.d/audit.rules":
 
@@ -6032,7 +6040,7 @@ Check for the following system calls being audited by performing the following c
 
 If the command does not return any output, this is a finding.
 
-Fix Text: Configure the operating system to generate audit records when successful/unsuccessful attempts to use the "sudoedit" command occur.
+$FIX_TEXT Configure the operating system to generate audit records when successful/unsuccessful attempts to use the "sudoedit" command occur.
 
 Add or update the following rule in "/etc/audit/rules.d/audit.rules":
 
@@ -6080,7 +6088,7 @@ Check for the following system calls being audited by performing the following s
 
 If the command does not return any output, this is a finding.
 
-Fix Text: Configure the operating system to generate audit records when successful/unsuccessful attempts to use the "mount" command occur.
+$FIX_TEXT Configure the operating system to generate audit records when successful/unsuccessful attempts to use the "mount" command occur.
 
 Add or update the following rules in "/etc/audit/rules.d/audit.rules" (removing those that do not match the CPU architecture):
 
@@ -6122,7 +6130,7 @@ Check for the following system calls being audited by performing the following s
 
 If the command does not return any output, this is a finding.
 
-Fix Text: Configure the operating system to generate audit records when successful/unsuccessful attempts to use the "umount" command occur.
+$FIX_TEXT Configure the operating system to generate audit records when successful/unsuccessful attempts to use the "umount" command occur.
 
 Add or update the following rule in "/etc/audit/rules.d/audit.rules":
 
@@ -6162,7 +6170,7 @@ Check for the following system call being audited by performing the following co
 
 If the command does not return any output, this is a finding.
 
-Fix Text: Configure the operating system to generate audit records when successful/unsuccessful attempts to use the "postdrop" command occur.
+$FIX_TEXT Configure the operating system to generate audit records when successful/unsuccessful attempts to use the "postdrop" command occur.
 
 Add or update the following rule in "/etc/audit/rules.d/audit.rules":
 
@@ -6202,7 +6210,7 @@ Check for the following system call being audited by performing the following co
 
 If the command does not return any output, this is a finding.
 
-Fix Text: Configure the operating system to generate audit records when successful/unsuccessful attempts to use the "postqueue" command occur.
+$FIX_TEXT Configure the operating system to generate audit records when successful/unsuccessful attempts to use the "postqueue" command occur.
 
 Add or update the following rule in "/etc/audit/rules.d/audit.rules":
 
@@ -6242,7 +6250,7 @@ Check for the following system call being audited by performing the following co
 
 If the command does not return any output, this is a finding.
 
-Fix Text: Configure the operating system to generate audit records when successful/unsuccessful attempts to use the "ssh-keysign" command occur.
+$FIX_TEXT Configure the operating system to generate audit records when successful/unsuccessful attempts to use the "ssh-keysign" command occur.
 
 Add or update the following rule in "/etc/audit/rules.d/audit.rules":
 
@@ -6285,7 +6293,7 @@ Check for the following system call being audited by performing the following co
 
 If the command does not return any output, this is a finding.
 
-Fix Text: Configure the operating system to generate audit records when successful/unsuccessful attempts to use the "pt_chown" command occur.
+$FIX_TEXT Configure the operating system to generate audit records when successful/unsuccessful attempts to use the "pt_chown" command occur.
 
 Add or update the following rule in "/etc/audit/rules.d/audit.rules":
 
@@ -6328,7 +6336,7 @@ Check for the following system call being audited by performing the following co
 
 If the command does not return any output, this is a finding.
 
-Fix Text: Configure the operating system to generate audit records when successful/unsuccessful attempts to use the "crontab" command occur.
+$FIX_TEXT Configure the operating system to generate audit records when successful/unsuccessful attempts to use the "crontab" command occur.
 
 Add or update the following rule in "/etc/audit/rules.d/audit.rules":
 
@@ -6367,7 +6375,7 @@ Check the auditing rules in "/etc/audit/audit.rules" with the following command:
 
 If the command does not return any output, this is a finding.
 
-Fix Text: Configure the operating system to generate audit records when successful/unsuccessful attempts to use the "pam_timestamp_check" command occur.
+$FIX_TEXT Configure the operating system to generate audit records when successful/unsuccessful attempts to use the "pam_timestamp_check" command occur.
 
 Add or update the following rule in "/etc/audit/rules.d/audit.rules":
 
@@ -6410,7 +6418,7 @@ If the command does not return the following output (appropriate to the architec
 
 If the command does not return any output, this is a finding.
 
-Fix Text: Configure the operating system generates audit records when successful/unsuccessful attempts to use the "init_module" command occur.
+$FIX_TEXT Configure the operating system generates audit records when successful/unsuccessful attempts to use the "init_module" command occur.
 
 Add or update the following rules in "/etc/audit/rules.d/audit.rules" (removing those that do not match the CPU architecture):
 
@@ -6455,7 +6463,7 @@ If the command does not return the following output (appropriate to the architec
 
 If the command does not return any output, this is a finding.
 
-Fix Text: Configure the operating system to generate audit records when successful/unsuccessful attempts to use the "delete_module" command occur.
+$FIX_TEXT Configure the operating system to generate audit records when successful/unsuccessful attempts to use the "delete_module" command occur.
 
 Add or update the following rules in "/etc/audit/rules.d/audit.rules" (removing those that do not match the CPU architecture):
 
@@ -6496,7 +6504,7 @@ If the command does not return the following output (appropriate to the architec
 
 If the command does not return any output, this is a finding.
 
-Fix Text: Configure the operating system to generate audit records when successful/unsuccessful attempts to use the "insmod" command occur.
+$FIX_TEXT Configure the operating system to generate audit records when successful/unsuccessful attempts to use the "insmod" command occur.
 
 Add or update the following rule in "/etc/audit/rules.d/audit.rules" (removing those that do not match the CPU architecture):
 
@@ -6535,7 +6543,7 @@ If the command does not return the following output (appropriate to the architec
 
 If the command does not return any output, this is a finding.
 
-Fix Text: Configure the operating system to generate audit records when successful/unsuccessful attempts to use the "rmmod" command occur.
+$FIX_TEXT Configure the operating system to generate audit records when successful/unsuccessful attempts to use the "rmmod" command occur.
 
 Add or update the following rule in "/etc/audit/rules.d/audit.rules" (removing those that do not match the CPU architecture):
 
@@ -6576,7 +6584,7 @@ If the command does not return the following output (appropriate to the architec
 
 If the command does not return any output, this is a finding.
 
-Fix Text: Configure the operating system to generate audit records when successful/unsuccessful attempts to use the "modprobe" command occur.
+$FIX_TEXT Configure the operating system to generate audit records when successful/unsuccessful attempts to use the "modprobe" command occur.
 
 Add or update the following rule in "/etc/audit/rules.d/audit.rules" (removing those that do not match the CPU architecture):
 
@@ -6613,7 +6621,7 @@ Check the auditing rules in "/etc/audit/audit.rules" with the following command:
 
 If the command does not return a line, or the line is commented out, this is a finding.
 
-Fix Text: Configure the operating system to generate audit records for all account creations, modifications, disabling, and termination events that affect "/etc/passwd".
+$FIX_TEXT Configure the operating system to generate audit records for all account creations, modifications, disabling, and termination events that affect "/etc/passwd".
 
 Add or update the following rule "/etc/audit/rules.d/audit.rules":
 
@@ -6657,7 +6665,7 @@ Check the auditing rules in "/etc/audit/audit.rules" with the following command:
 
 If the command does not return a line, or the line is commented out, this is a finding.
 
-Fix Text: Configure the operating system to generate audit records for all account creations, modifications, disabling, and termination events that affect "/etc/group".
+$FIX_TEXT Configure the operating system to generate audit records for all account creations, modifications, disabling, and termination events that affect "/etc/group".
 
 Add or update the following rule in "/etc/audit/rules.d/audit.rules":
 
@@ -6701,7 +6709,7 @@ Check the auditing rules in "/etc/audit/audit.rules" with the following command:
 
 If the command does not return a line, or the line is commented out, this is a finding.
 
-Fix Text: Configure the operating system to generate audit records for all account creations, modifications, disabling, and termination events that affect "/etc/gshadow".
+$FIX_TEXT Configure the operating system to generate audit records for all account creations, modifications, disabling, and termination events that affect "/etc/gshadow".
 
 Add or update the following rule in "/etc/audit/rules.d/audit.rules":
 
@@ -6745,7 +6753,7 @@ Check the auditing rules in "/etc/audit/audit.rules" with the following command:
 
 If the command does not return a line, or the line is commented out, this is a finding.
 
-Fix Text: Configure the operating system to generate audit records for all account creations, modifications, disabling, and termination events that affect /etc/shadow.
+$FIX_TEXT Configure the operating system to generate audit records for all account creations, modifications, disabling, and termination events that affect /etc/shadow.
 
 Add or update the following file system rule in "/etc/audit/rules.d/audit.rules":
 
@@ -6789,7 +6797,7 @@ Check the auditing rules in "/etc/audit/rules.d/audit.rules" with the following 
 
 If the command does not return a line, or the line is commented out, this is a finding.
 
-Fix Text: Configure the operating system to generate audit records for all account creations, modifications, disabling, and termination events that affect /etc/opasswd.
+$FIX_TEXT Configure the operating system to generate audit records for all account creations, modifications, disabling, and termination events that affect /etc/opasswd.
 
 Add or update the following file system rule in "/etc/audit/rules.d/audit.rules":
 
@@ -6835,7 +6843,7 @@ Note: The output lines of the command are duplicated to cover both 32-bit and 64
 
 If the command does not return any output, this is a finding.
 
-Fix Text: Configure the operating system to generate audit records when successful/unsuccessful attempts to use the "rename" command occur.
+$FIX_TEXT Configure the operating system to generate audit records when successful/unsuccessful attempts to use the "rename" command occur.
 
 Add the following rules in "/etc/audit/rules.d/audit.rules" (removing those that do not match the CPU architecture):
 
@@ -6876,7 +6884,7 @@ Note: The output lines of the command are duplicated to cover both 32-bit and 64
 
 If the command does not return any output, this is a finding.
 
-Fix Text: Configure the operating system to generate audit records when successful/unsuccessful attempts to use the "renameat" command occur.
+$FIX_TEXT Configure the operating system to generate audit records when successful/unsuccessful attempts to use the "renameat" command occur.
 
 Add the following rules in "/etc/audit/rules.d/audit.rules" (removing those that do not match the CPU architecture):
 
@@ -6917,7 +6925,7 @@ Note: The output lines of the command are duplicated to cover both 32-bit and 64
 
 If the command does not return any output, this is a finding.
 
-Fix Text: Configure the operating system to generate audit records when successful/unsuccessful attempts to use the "rmdir" command occur.
+$FIX_TEXT Configure the operating system to generate audit records when successful/unsuccessful attempts to use the "rmdir" command occur.
 
 Add the following rules in "/etc/audit/rules.d/audit.rules" (removing those that do not match the CPU architecture):
 
@@ -6958,7 +6966,7 @@ Note: The output lines of the command are duplicated to cover both 32-bit and 64
 
 If the command does not return any output, this is a finding.
 
-Fix Text: Configure the operating system to generate audit records when successful/unsuccessful attempts to use the "unlink" command occur.
+$FIX_TEXT Configure the operating system to generate audit records when successful/unsuccessful attempts to use the "unlink" command occur.
 
 Add the following rules in "/etc/audit/rules.d/audit.rules" (removing those that do not match the CPU architecture):
 
@@ -6999,7 +7007,7 @@ Note: The output lines of the command are duplicated to cover both 32-bit and 64
 
 If the command does not return any output, this is a finding.
 
-Fix Text: Configure the operating system to generate audit records when successful/unsuccessful attempts to use the "unlinkat" command occur.
+$FIX_TEXT Configure the operating system to generate audit records when successful/unsuccessful attempts to use the "unlinkat" command occur.
 
 Add the following rules in "/etc/audit/rules.d/audit.rules" (removing those that do not match the CPU architecture):
 
@@ -7039,7 +7047,7 @@ If there are no lines in the "/etc/rsyslog.conf" file that contain the "@" or "@
 
 If there is no evidence that the audit logs are being sent to another system, this is a finding.
 
-Fix Text: Modify the "/etc/rsyslog.conf" file to contain a configuration line to send all "rsyslog" output to a log aggregation system:
+$FIX_TEXT Modify the "/etc/rsyslog.conf" file to contain a configuration line to send all "rsyslog" output to a log aggregation system:
 
 *.* @@<log aggregation system name>  
 
@@ -7070,7 +7078,7 @@ If the "imtcp" module is being loaded in the "/etc/rsyslog.conf" file, ask to se
 
 If the documentation does not exist, or does not specify the server as a log aggregation system, this is a finding.
 
-Fix Text: Modify the "/etc/rsyslog.conf" file to remove the "ModLoad imtcp" configuration line, or document the system as being used for log aggregation.  
+$FIX_TEXT Modify the "/etc/rsyslog.conf" file to remove the "ModLoad imtcp" configuration line, or document the system as being used for log aggregation.  
 
 CCI: CCI-000318
 
@@ -7124,7 +7132,7 @@ If neither of these applications are loaded and active, ask the System Administr
 
 If no antivirus scan program is active on the system, this is a finding.
 
-Fix Text: Install an approved DoD antivirus solution on the system.  
+$FIX_TEXT Install an approved DoD antivirus solution on the system.  
 
 CCI: CCI-001668
 _____________________________________________________________
@@ -7177,7 +7185,7 @@ DatabaseDirectory /var/lib/clamav
 
 If the database file has a date older than seven days from the current date, this is a finding.
 
-Fix Text: Update the approved DoD virus scan software and virus definition files.  
+$FIX_TEXT Update the approved DoD virus scan software and virus definition files.  
 
 CCI: CCI-001668
 _____________________________________________________________
@@ -7205,7 +7213,7 @@ This can be set as a global domain (with the * wildcard) but may be set differen
 
 If the "maxlogins" item is missing or the value is not set to "10" or less for all domains that have the "maxlogins" item assigned, this is a finding.
 
-Fix Text: Configure the operating system to limit the number of concurrent sessions to "10" for all accounts and/or account types.
+$FIX_TEXT Configure the operating system to limit the number of concurrent sessions to "10" for all accounts and/or account types.
 
 Add the following line to the top of the /etc/security/limits.conf:
 
@@ -7251,7 +7259,7 @@ Ask the System Administrator for the site or program PPSM CLSA. Verify the servi
 
 If there are additional ports, protocols, or services that are not in the PPSM CLSA, or there are ports, protocols, or services that are prohibited by the PPSM Category Assurance List (CAL), this is a finding.
 
-Fix Text: Update the host's firewall settings and/or running services to comply with the PPSM CLSA for the site or program and the PPSM CAL.  
+$FIX_TEXT Update the host's firewall settings and/or running services to comply with the PPSM CLSA for the site or program and the PPSM CAL.  
 
 CCI: CCI-000382
 
@@ -7290,7 +7298,7 @@ Ciphers aes128-ctr,aes192-ctr,aes256-ctr
 
 If any ciphers other than "aes128-ctr", "aes192-ctr", or "aes256-ctr" are listed, the "Ciphers" keyword is missing, or the retuned line is commented out, this is a finding.
 
-Fix Text: Configure SSH to use FIPS 140-2 approved cryptographic algorithms.
+$FIX_TEXT Configure SSH to use FIPS 140-2 approved cryptographic algorithms.
 
 Add the following line (or modify the line to have the required value) to the "/etc/ssh/sshd_config" file (this file may be named differently or be in a different location if using a version of SSH that is provided by a third-party vendor).
 
@@ -7330,7 +7338,7 @@ TMOUT=600
 
 If "TMOUT" is not set to "600" or less in "/etc/bashrc", this is a finding.
 
-Fix Text: Configure the operating system to terminate all network connections associated with a communications session at the end of the session or after a period of inactivity.
+$FIX_TEXT Configure the operating system to terminate all network connections associated with a communications session at the end of the session or after a period of inactivity.
 
 Add the following line to "/etc/profile" (or modify the line to have the required value):
 
@@ -7406,7 +7414,7 @@ If the system does not display a graphical logon banner or the banner does not m
 
 If the text in the file does not match the Standard Mandatory DoD Notice and Consent Banner, this is a finding.
 
-Fix Text: Configure the operating system to display the Standard Mandatory DoD Notice and Consent Banner before granting access to the system via the ssh.
+$FIX_TEXT Configure the operating system to display the Standard Mandatory DoD Notice and Consent Banner before granting access to the system via the ssh.
 
 Edit the "/etc/ssh/sshd_config" file to uncomment the banner keyword and configure it to point to a file that will contain the logon banner (this file may be named differently or be in a different location if using a version of SSH that is provided by a third-party vendor). An example configuration line is:
 
@@ -7477,7 +7485,7 @@ ssl start_tls
 
 If the "ssl" option is not "start_tls", this is a finding.
 
-Fix Text: Configure the operating system to implement cryptography to protect the integrity of LDAP authentication sessions.
+$FIX_TEXT Configure the operating system to implement cryptography to protect the integrity of LDAP authentication sessions.
 
 Set the USELDAPAUTH=yes in "/etc/sysconfig/authconfig".
 
@@ -7518,7 +7526,7 @@ Verify the directory set with the "tls_cacertdir" option exists.
 
 If the directory does not exist or the option is commented out, this is a finding.
 
-Fix Text: Configure the operating system to implement cryptography to protect the integrity of LDAP remote access sessions.
+$FIX_TEXT Configure the operating system to implement cryptography to protect the integrity of LDAP remote access sessions.
 
 Set the "tls_cacertdir" option in "/etc/pam_ldap.conf" to point to the directory that will contain the X.509 certificates for peer authentication.
 
@@ -7559,7 +7567,7 @@ Verify the "tls_cacertfile" option points to a file that contains the trusted CA
 
 If this file does not exist, or the option is commented out or missing, this is a finding.
 
-Fix Text: Configure the operating system to implement cryptography to protect the integrity of LDAP remote access sessions.
+$FIX_TEXT Configure the operating system to implement cryptography to protect the integrity of LDAP remote access sessions.
 
 Set the "tls_cacertfile" option in "/etc/pam_ldap.conf" to point to the path for the X.509 certificates used for peer authentication.  
 
@@ -7596,7 +7604,7 @@ If the "SSH server" package is not installed, this is a finding.
 
 If the "SSH client" package is not installed, this is a finding.
 
-Fix Text: Install SSH packages onto the host with the following commands:
+$FIX_TEXT Install SSH packages onto the host with the following commands:
 
 # yum install openssh-clients.x86_64
 # yum install openssh-server.x86_64
@@ -7645,7 +7653,7 @@ CGroup: /system.slice/sshd.service
 
 If "sshd" does not show a status of "active" and "running", this is a finding.
 
-Fix Text: Configure the SSH service to automatically start after reboot with the following command:
+$FIX_TEXT Configure the SSH service to automatically start after reboot with the following command:
 
 # systemctl enable sshd ln -s '/usr/lib/systemd/system/sshd.service' '/etc/systemd/system/multi-user.target.wants/sshd.service'  
 
@@ -7687,7 +7695,7 @@ ClientAliveInterval 600
 
 If "ClientAliveInterval" is not set to "600" in "/etc/ ssh/sshd_config", and a lower value is not documented with the Information System Security Officer (ISSO) as an operational requirement, this is a finding.
 
-Fix Text: Configure the operating system to automatically terminate a user session after inactivity time-outs have expired or at shutdown.
+$FIX_TEXT Configure the operating system to automatically terminate a user session after inactivity time-outs have expired or at shutdown.
 
 Add the following line (or modify the line to have the required value) to the "/etc/ssh/sshd_config" file (this file may be named differently or be in a different location if using a version of SSH that is provided by a third-party vendor):
 
@@ -7723,7 +7731,7 @@ RhostsRSAAuthentication yes
 
 If the value is returned as "no", the returned line is commented out, or no output is returned, this is a finding.
 
-Fix Text: Configure the SSH daemon to not allow authentication using RSA rhosts authentication.
+$FIX_TEXT Configure the SSH daemon to not allow authentication using RSA rhosts authentication.
 
 Add the following line in "/etc/ssh/sshd_config", or uncomment the line and set the value to "yes":
 
@@ -7759,7 +7767,7 @@ ClientAliveCountMax 0
 
 If "ClientAliveCountMax" is not set to "0" in "/etc/ ssh/sshd_config", this is a finding.
 
-Fix Text: Configure the operating system to automatically terminate a user session after inactivity time-outs have expired or at shutdown.
+$FIX_TEXT Configure the operating system to automatically terminate a user session after inactivity time-outs have expired or at shutdown.
 
 Add the following line (or modify the line to have the required value) to the "/etc/ssh/sshd_config" file (this file may be named differently or be in a different location if using a version of SSH that is provided by a third-party vendor):
 
@@ -7795,7 +7803,7 @@ IgnoreRhosts yes
 
 If the value is returned as "no", the returned line is commented out, or no output is returned, this is a finding.
 
-Fix Text: Configure the SSH daemon to not allow authentication using known hosts authentication.
+$FIX_TEXT Configure the SSH daemon to not allow authentication using known hosts authentication.
 
 Add the following line in "/etc/ssh/sshd_config", or uncomment the line and set the value to "yes":
 
@@ -7825,7 +7833,7 @@ PrintLastLog yes
 
 If the "PrintLastLog" keyword is set to "no", is missing, or is commented out, this is a finding.
 
-Fix Text: Configure SSH to provide users with feedback on when account accesses last occurred by setting the required configuration options in "/etc/pam.d/sshd" or in the "sshd_config" file used by the system ("/etc/ssh/sshd_config" will be used in the example) (this file may be named differently or be in a different location if using a version of SSH that is provided by a third-party vendor).
+$FIX_TEXT Configure SSH to provide users with feedback on when account accesses last occurred by setting the required configuration options in "/etc/pam.d/sshd" or in the "sshd_config" file used by the system ("/etc/ssh/sshd_config" will be used in the example) (this file may be named differently or be in a different location if using a version of SSH that is provided by a third-party vendor).
 
 Add the following line to the top of "/etc/pam.d/sshd":
 
@@ -7861,7 +7869,7 @@ PermitRootLogin no
 
 If the "PermitRootLogin" keyword is set to "yes", is missing, or is commented out, this is a finding.
 
-Fix Text: Configure SSH to stop users from logging on remotely as the root user.
+$FIX_TEXT Configure SSH to stop users from logging on remotely as the root user.
 
 Edit the appropriate "/etc/ssh/sshd_config" file to uncomment or add the line for the "PermitRootLogin" keyword and set its value to "no" (this file may be named differently or be in a different location if using a version of SSH that is provided by a third-party vendor):
 
@@ -7894,7 +7902,7 @@ IgnoreUserKnownHosts yes
 
 If the value is returned as "no", the returned line is commented out, or no output is returned, this is a finding.
 
-Fix Text: Configure the SSH daemon to not allow authentication using known hosts authentication.
+$FIX_TEXT Configure the SSH daemon to not allow authentication using known hosts authentication.
 
 Add the following line in "/etc/ssh/sshd_config", or uncomment the line and set the value to "yes":
 
@@ -7929,7 +7937,7 @@ Protocol 2
 
 If any protocol line other than "Protocol 2" is uncommented, this is a finding.
 
-Fix Text: Remove all Protocol lines that reference version "1" in "/etc/ssh/sshd_config" (this file may be named differently or be in a different location if using a version of SSH that is provided by a third-party vendor). The "Protocol" line must be as follows:
+$FIX_TEXT Remove all Protocol lines that reference version "1" in "/etc/ssh/sshd_config" (this file may be named differently or be in a different location if using a version of SSH that is provided by a third-party vendor). The "Protocol" line must be as follows:
 
 Protocol 2
 
@@ -7964,7 +7972,7 @@ MACs hmac-sha2-256,hmac-sha2-512
 
 If any ciphers other than "hmac-sha2-256" or "hmac-sha2-512" are listed or the retuned line is commented out, this is a finding.
 
-Fix Text: Edit the "/etc/ssh/sshd_config" file to uncomment or add the line for the "MACs" keyword and set its value to "hmac-sha2-256" and/or "hmac-sha2-512" (this file may be named differently or be in a different location if using a version of SSH that is provided by a third-party vendor):
+$FIX_TEXT Edit the "/etc/ssh/sshd_config" file to uncomment or add the line for the "MACs" keyword and set its value to "hmac-sha2-256" and/or "hmac-sha2-512" (this file may be named differently or be in a different location if using a version of SSH that is provided by a third-party vendor):
 
 MACs hmac-sha2-256,hmac-sha2-512
 
@@ -7999,7 +8007,7 @@ The following command will find all SSH public key files on the system:
 
 If any file has a mode more permissive than "0644", this is a finding.
 
-Fix Text: Note: SSH public key files may be found in other directories on the system depending on the installation.
+$FIX_TEXT Note: SSH public key files may be found in other directories on the system depending on the installation.
 
 Change the mode of public host key files under "/etc/ssh" to "0644" with the following command:
 
@@ -8035,7 +8043,7 @@ Check the mode of the private host key files under "/etc/ssh" file with the foll
 
 If any file has a mode more permissive than "0600", this is a finding.
 
-Fix Text: Configure the mode of SSH private host key files under "/etc/ssh" to "0600" with the following command:
+$FIX_TEXT Configure the mode of SSH private host key files under "/etc/ssh" to "0600" with the following command:
 
 # chmod 0600 /etc/ssh/ssh_host*key  
 
@@ -8063,7 +8071,7 @@ GSSAPIAuthentication no
 
 If the "GSSAPIAuthentication" keyword is missing, is set to "yes" and is not documented with the Information System Security Officer (ISSO), or the returned line is commented out, this is a finding.
 
-Fix Text: Uncomment the "GSSAPIAuthentication" keyword in "/etc/ssh/sshd_config" (this file may be named differently or be in a different location if using a version of SSH that is provided by a third-party vendor) and set the value to "no":
+$FIX_TEXT Uncomment the "GSSAPIAuthentication" keyword in "/etc/ssh/sshd_config" (this file may be named differently or be in a different location if using a version of SSH that is provided by a third-party vendor) and set the value to "no":
 
 GSSAPIAuthentication no
 
@@ -8107,7 +8115,7 @@ KerberosAuthentication no
 
 If the "KerberosAuthentication" keyword is missing, or is set to "yes" and is not documented with the Information System Security Officer (ISSO), or the returned line is commented out, this is a finding.
 
-Fix Text: Uncomment the "KerberosAuthentication" keyword in "/etc/ssh/sshd_config" (this file may be named differently or be in a different location if using a version of SSH that is provided by a third-party vendor) and set the value to "no":
+$FIX_TEXT Uncomment the "KerberosAuthentication" keyword in "/etc/ssh/sshd_config" (this file may be named differently or be in a different location if using a version of SSH that is provided by a third-party vendor) and set the value to "no":
 
 KerberosAuthentication no
 
@@ -8154,7 +8162,7 @@ StrictModes yes
 
 If "StrictModes" is set to "no", is missing, or the returned line is commented out, this is a finding.
 
-Fix Text: Uncomment the "StrictModes" keyword in "/etc/ssh/sshd_config" (this file may be named differently or be in a different location if using a version of SSH that is provided by a third-party vendor) and set the value to "yes":
+$FIX_TEXT Uncomment the "StrictModes" keyword in "/etc/ssh/sshd_config" (this file may be named differently or be in a different location if using a version of SSH that is provided by a third-party vendor) and set the value to "yes":
 
 StrictModes yes
 
@@ -8185,7 +8193,7 @@ UsePrivilegeSeparation sandbox
 
 If the "UsePrivilegeSeparation" keyword is set to "no", is missing, or the retuned line is commented out, this is a finding.
 
-Fix Text: Uncomment the "UsePrivilegeSeparation" keyword in "/etc/ssh/sshd_config" (this file may be named differently or be in a different location if using a version of SSH that is provided by a third-party vendor) and set the value to "sandbox" or "yes":
+$FIX_TEXT Uncomment the "UsePrivilegeSeparation" keyword in "/etc/ssh/sshd_config" (this file may be named differently or be in a different location if using a version of SSH that is provided by a third-party vendor) and set the value to "sandbox" or "yes":
 
 UsePrivilegeSeparation sandbox
 
@@ -8215,7 +8223,7 @@ Compression delayed
 
 If the "Compression" keyword is set to "yes", is missing, or the retuned line is commented out, this is a finding.
 
-Fix Text: Uncomment the "Compression" keyword in "/etc/ssh/sshd_config" (this file may be named differently or be in a different location if using a version of SSH that is provided by a third-party vendor) on the system and set the value to "delayed" or "no":
+$FIX_TEXT Uncomment the "Compression" keyword in "/etc/ssh/sshd_config" (this file may be named differently or be in a different location if using a version of SSH that is provided by a third-party vendor) on the system and set the value to "delayed" or "no":
 
 Compression no
 
@@ -8265,7 +8273,7 @@ ntp
 
 If a crontab file does not exist in the "/etc/cron.daily" that executes the "ntpdate" file, this is a finding.
 
-Fix Text: Edit the "/etc/ntp.conf" file and add or update an entry to define "maxpoll" to "10" as follows:
+$FIX_TEXT Edit the "/etc/ntp.conf" file and add or update an entry to define "maxpoll" to "10" as follows:
 
 maxpoll 10
 
@@ -8308,7 +8316,7 @@ rule ipv4 filter IN_public_allow 0 -p tcp -m limit --limit 25/minute --limit-bur
 
 If a rule with both the limit and limit-burst arguments parameters does not exist, this is a finding.
 
-Fix Text: Create a direct firewall rule to protect against DoS attacks with the following command:
+$FIX_TEXT Create a direct firewall rule to protect against DoS attacks with the following command:
 
 Note: The command is to add a rule to the public zone.
 
@@ -8359,7 +8367,7 @@ running
 
 If "firewalld" does not show a state of "running", this is a finding.
 
-Fix Text: Ensure the operating system's application firewall is enabled.
+$FIX_TEXT Ensure the operating system's application firewall is enabled.
 
 Install the "firewalld" package, if it is not on the system, with the following command:
 
@@ -8394,7 +8402,7 @@ session required pam_lastlog.so showfailed silent
 
 If "pam_lastlog" is missing from "/etc/pam.d/postlogin-ac" file, or the silent option is present on the line check for the "PrintLastLog" keyword in the sshd daemon configuration file, this is a finding.
 
-Fix Text: Configure the operating system to provide users with feedback on when account accesses last occurred by setting the required configuration options in "/etc/pam.d/postlogin-ac".
+$FIX_TEXT Configure the operating system to provide users with feedback on when account accesses last occurred by setting the required configuration options in "/etc/pam.d/postlogin-ac".
 
 Add the following line to the top of "/etc/pam.d/postlogin-ac":
 
@@ -8423,7 +8431,7 @@ Check the system for the existence of these files with the following command:
 
 If any ".shosts" files are found on the system, this is a finding.
 
-Fix Text: Remove any found ".shosts" files from the system.
+$FIX_TEXT Remove any found ".shosts" files from the system.
 
 # rm /[path]/[to]/[file]/.shosts  
 
@@ -8450,7 +8458,7 @@ Check the system for the existence of these files with the following command:
 
 If any "shosts.equiv" files are found on the system, this is a finding.
 
-Fix Text: Remove any found "shosts.equiv" files from the system.
+$FIX_TEXT Remove any found "shosts.equiv" files from the system.
 
 # rm /[path]/[to]/[file]/shosts.equiv  
 
@@ -8493,7 +8501,7 @@ nameserver 192.168.1.3
 
 If less than two lines are returned that are not commented out, this is a finding.
 
-Fix Text: Configure the operating system to use two or more name servers for DNS resolution.
+$FIX_TEXT Configure the operating system to use two or more name servers for DNS resolution.
 
 Edit the "/etc/resolv.conf" file to uncomment or add the two or more "nameserver" option lines with the IP address of local authoritative name servers. If local host resolution is being performed, the "/etc/resolv.conf" file must be empty. An empty "/etc/resolv.conf" file can be created as follows:
 
@@ -8529,7 +8537,7 @@ net.ipv4.conf.all.accept_source_route=0
 
 If the returned line does not have a value of "0", a line is not returned, or the returned line is commented out, this is a finding.
 
-Fix Text: Set the system to the required kernel parameter by adding the following line to "/etc/sysctl.conf" (or modify the line to have the required value):
+$FIX_TEXT Set the system to the required kernel parameter by adding the following line to "/etc/sysctl.conf" (or modify the line to have the required value):
 
 net.ipv4.conf.all.accept_source_route = 0  
 
@@ -8557,7 +8565,7 @@ net.ipv4.conf.default.accept_source_route=0
 
 If the returned line does not have a value of "0", a line is not returned, or the returned line is commented out, this is a finding.
 
-Fix Text: Set the system to the required kernel parameter by adding the following line to "/etc/sysctl.conf" (or modify the line to have the required value):
+$FIX_TEXT Set the system to the required kernel parameter by adding the following line to "/etc/sysctl.conf" (or modify the line to have the required value):
 
 net.ipv4.conf.default.accept_source_route = 0  
 
@@ -8585,7 +8593,7 @@ net.ipv4.icmp_echo_ignore_broadcasts=1
 
 If the returned line does not have a value of "1", a line is not returned, or the retuned line is commented out, this is a finding.
 
-Fix Text: Set the system to the required kernel parameter by adding the following line to "/etc/sysctl.conf" (or modify the line to have the required value):
+$FIX_TEXT Set the system to the required kernel parameter by adding the following line to "/etc/sysctl.conf" (or modify the line to have the required value):
 
 net.ipv4.icmp_echo_ignore_broadcasts=1  
 
@@ -8613,7 +8621,7 @@ net.ipv4.conf.default.accept_redirects=0
 
 If the returned line does not have a value of "0", or a line is not returned, this is a finding.
 
-Fix Text: Set the system to not accept IPv4 ICMP redirect messages by adding the following line to "/etc/sysctl.conf" (or modify the line to have the required value):
+$FIX_TEXT Set the system to not accept IPv4 ICMP redirect messages by adding the following line to "/etc/sysctl.conf" (or modify the line to have the required value):
 
 net.ipv4.conf.default.accept_redirects = 0  
 
@@ -8642,7 +8650,7 @@ net.ipv4.conf.all.accept_redirects=0
 
 If both of the returned lines do not have a value of "0", or a line is not returned, this is a finding.
 
-Fix Text: Set the system to ignore IPv4 ICMP redirect messages by adding the following line to "/etc/sysctl.conf" (or modify the line to have the required value):
+$FIX_TEXT Set the system to ignore IPv4 ICMP redirect messages by adding the following line to "/etc/sysctl.conf" (or modify the line to have the required value):
 
 net.ipv4.conf.all.accept_redirects = 0  
 
@@ -8670,7 +8678,7 @@ net.ipv4.conf.default.send_redirects=0
 
 If the returned line does not have a value of "0", or a line is not returned, this is a finding.
 
-Fix Text: Configure the system to not allow interfaces to perform IPv4 ICMP redirects by default.
+$FIX_TEXT Configure the system to not allow interfaces to perform IPv4 ICMP redirects by default.
 
 Set the system to the required kernel parameter by adding the following line to "/etc/sysctl.conf" (or modify the line to have the required value):
 
@@ -8701,7 +8709,7 @@ net.ipv4.conf.all.send_redirects=0
 
 If the returned line does not have a value of "0", or a line is not returned, this is a finding.
 
-Fix Text: Configure the system to not allow interfaces to perform IPv4 ICMP redirects.
+$FIX_TEXT Configure the system to not allow interfaces to perform IPv4 ICMP redirects.
 
 Set the system to the required kernel parameter by adding the following line to "/etc/sysctl.conf" (or modify the line to have the required value):
 
@@ -8732,7 +8740,7 @@ Check for the status with the following command:
 
 If network interfaces are found on the system in promiscuous mode and their use has not been approved by the ISSO and documented, this is a finding.
 
-Fix Text: Configure network interfaces to turn off promiscuous mode unless approved by the ISSO and documented.
+$FIX_TEXT Configure network interfaces to turn off promiscuous mode unless approved by the ISSO and documented.
 
 Set the promiscuous mode of an interface to off with the following command:
 
@@ -8769,7 +8777,7 @@ smtpd_client_restrictions = permit_mynetworks, reject
 
 If the "smtpd_client_restrictions" parameter contains any entries other than "permit_mynetworks" and "reject", this is a finding.
 
-Fix Text: If "postfix" is installed, modify the "/etc/postfix/main.cf" file to restrict client connections to the local network with the following command:
+$FIX_TEXT If "postfix" is installed, modify the "/etc/postfix/main.cf" file to restrict client connections to the local network with the following command:
 
 # postconf -e 'smtpd_client_restrictions = permit_mynetworks,reject'  
 
@@ -8797,7 +8805,7 @@ lftp-4.4.8-7.el7.x86_64.rpm
 
 If "lftpd" is installed and is not documented with the Information System Security Officer (ISSO) as an operational requirement, this is a finding.
 
-Fix Text: Document the "lftpd" package with the ISSO as an operational requirement or remove it from the system with the following command:
+$FIX_TEXT Document the "lftpd" package with the ISSO as an operational requirement or remove it from the system with the following command:
 
 # yum remove lftpd  
 
@@ -8825,7 +8833,7 @@ tftp-server-0.49-9.el7.x86_64.rpm
 
 If TFTP is installed and the requirement for TFTP is not documented with the ISSO, this is a finding.
 
-Fix Text: Remove the TFTP package from the system with the following command:
+$FIX_TEXT Remove the TFTP package from the system with the following command:
 
 # yum remove tftp  
 
@@ -8865,7 +8873,7 @@ X11Fowarding yes
 
 If the "X11Forwarding" keyword is set to "no", is missing, or is commented out, this is a finding.
 
-Fix Text: Configure SSH to encrypt connections for interactive users.
+$FIX_TEXT Configure SSH to encrypt connections for interactive users.
 
 Edit the "/etc/ssh/sshd_config" file to uncomment or add the line for the "X11Forwarding" keyword and set its value to "yes" (this file may be named differently or be in a different location if using a version of SSH that is provided by a third-party vendor):
 
@@ -8904,7 +8912,7 @@ server_args = -s /var/lib/tftpboot
 
 If the "server_args" line does not have a "-s" option and a subdirectory is not assigned, this is a finding.
 
-Fix Text: Configure the TFTP daemon to operate in secure mode by adding the following line to "/etc/xinetd.d/tftp" (or modify the line to have the required value):
+$FIX_TEXT Configure the TFTP daemon to operate in secure mode by adding the following line to "/etc/xinetd.d/tftp" (or modify the line to have the required value):
 
 server_args = -s /var/lib/tftpboot  
 
@@ -8933,7 +8941,7 @@ Ask the System Administrator if use of the X Windows System is an operational re
 
 If the use of X Windows on the system is not documented with the Information System Security Officer (ISSO), this is a finding.
 
-Fix Text: Document the requirement for an X Windows server with the ISSO or remove the related packages with the following commands:
+$FIX_TEXT Document the requirement for an X Windows server with the ISSO or remove the related packages with the following commands:
 
 #yum groupremove "X Window System"
 
@@ -8963,7 +8971,7 @@ net.ipv4.ip_forward=0
 
 If IP forwarding value is "1" and the system is hosting any application, database, or web servers, this is a finding.
 
-Fix Text: Set the system to the required kernel parameter by adding the following line to "/etc/sysctl.conf" (or modify the line to have the required value):
+$FIX_TEXT Set the system to the required kernel parameter by adding the following line to "/etc/sysctl.conf" (or modify the line to have the required value):
 
 net.ipv4.ip_forward = 0  
 
@@ -8991,7 +8999,7 @@ To check if the system is importing an NFS file system, look for any entries in 
 
 If the system is mounting file systems via NFS and has the sec option without the "krb5:krb5i:krb5p" settings, the "sec" option has the "sys" setting, or the "sec" option is missing, this is a finding.
 
-Fix Text: Update the "/etc/fstab" file so the option "sec" is defined for each NFS mounted file system and the "sec" option does not have the "sys" setting.
+$FIX_TEXT Update the "/etc/fstab" file so the option "sec" is defined for each NFS mounted file system and the "sec" option does not have the "sys" setting.
 
 Ensure the "sec" option is defined as "krb5:krb5i:krb5p".  
 
@@ -9026,7 +9034,7 @@ If the file does exist, check for the default community strings with the followi
 
 If either of these commands returns any output, this is a finding.
 
-Fix Text: If the "/etc/snmp/snmpd.conf" file exists, modify any lines that contain a community string value of "public" or "private" to another string value.  
+$FIX_TEXT If the "/etc/snmp/snmpd.conf" file exists, modify any lines that contain a community string value of "public" or "private" to another string value.  
 
 CCI: CCI-000366
 _____________________________________________________________
@@ -9084,7 +9092,7 @@ If "firewalld" and "tcpwrappers" are not installed, configured, and active, ask 
 
 If "firewalld" is active and is not configured to grant access to specific hosts and "tcpwrappers" is not configured to grant or deny access to specific hosts, this is a finding.
 
-Fix Text: If "firewalld" is installed and active on the system, configure rules for allowing specific services and hosts.
+$FIX_TEXT If "firewalld" is installed and active on the system, configure rules for allowing specific services and hosts.
 
 If "tcpwrappers" is installed, configure the "/etc/hosts.allow" and "/etc/hosts.deny" to allow or deny access to specific hosts.  
 
@@ -9127,7 +9135,7 @@ conn mytunnel
 
 If there are indications that a "conn" parameter is configured for a tunnel, ask the System Administrator if the tunnel is documented with the ISSO. If "libreswan" is installed, "IPsec" is active, and an undocumented tunnel is active, this is a finding.
 
-Fix Text: Remove all unapproved tunnels from the system, or document them with the ISSO.  
+$FIX_TEXT Remove all unapproved tunnels from the system, or document them with the ISSO.  
 
 CCI: CCI-000366
 _____________________________________________________________
@@ -9155,7 +9163,7 @@ net.ipv6.conf.all.accept_source_route=0
 
 If the returned lines do not have a value of "0", or a line is not returned, this is a finding.
 
-Fix Text: Set the system to the required kernel parameter, if IPv6 is enabled, by adding the following line to "/etc/sysctl.conf" (or modify the line to have the required value):
+$FIX_TEXT Set the system to the required kernel parameter, if IPv6 is enabled, by adding the following line to "/etc/sysctl.conf" (or modify the line to have the required value):
 
 net.ipv6.conf.all.accept_source_route = 0  
 
@@ -9201,7 +9209,7 @@ authconfig-gtk-6.1.12-19.el7.noarch.rpm
 
 If the "esc", "pam_pkcs11", and "authconfig-gtk" packages are not installed, this is a finding.
 
-Fix Text: Configure the operating system to implement multifactor authentication by installing the required packages.
+$FIX_TEXT Configure the operating system to implement multifactor authentication by installing the required packages.
 
 Install the "esc", "pam_pkcs11", "authconfig", and "authconfig-gtk" packages on the system with the following command:
 
@@ -9250,7 +9258,7 @@ services = nss, pam
 
 If the "pam" service is not present, this is a finding.
 
-Fix Text: Configure the operating system to implement multifactor authentication for remote access to privileged accounts via pluggable authentication modules (PAM).
+$FIX_TEXT Configure the operating system to implement multifactor authentication for remote access to privileged accounts via pluggable authentication modules (PAM).
 
 Modify all of the services lines in /etc/sssd/sssd.conf to include pam.  
 
@@ -9301,7 +9309,7 @@ There should be at least three lines returned. All lines must match the example 
 
 If "oscp_on" is present in all "cert_policy" lines, this is not a finding.
 
-Fix Text: Configure the operating system to do certificate status checking for PKI authentication.
+$FIX_TEXT Configure the operating system to do certificate status checking for PKI authentication.
 
 Modify all of the "cert_policy" lines in "/etc/pam_pkcs11/pam_pkcs11.conf" to include "ocsp_on".  
 
@@ -9348,7 +9356,7 @@ The entry for use only smartcard for logon may be enabled, and the smartcard mod
 
 If smartcard authentication is disabled or the smartcard and smartcard removal actions are blank, this is a finding.
 
-Fix Text: Configure the operating system to implement smart card logon for multifactor authentication to uniquely identify privileged users.
+$FIX_TEXT Configure the operating system to implement smart card logon for multifactor authentication to uniquely identify privileged users.
 
 Enable smart card logons with the following commands:
 
@@ -9390,6 +9398,6 @@ lo loopback unmanaged
 
 If a wireless interface is configured and its use on the system is not documented with the Information System Security Officer (ISSO), this is a finding.
 
-Fix Text: Configure the system to disable all wireless network interfaces with the following command:
+$FIX_TEXT Configure the system to disable all wireless network interfaces with the following command:
 
 #nmcli radio wifi off  
