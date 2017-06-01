@@ -10,4 +10,4 @@
 [ ! -x STIG7CHECKS ] && echo -e "cannot find STIG7CHECKS file or it is not executable please verify" && exit
 source STIG7CHECKS
 
-RHEL-07-010010
+RHEL-07-010050

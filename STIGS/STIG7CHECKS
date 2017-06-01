@@ -10,10 +10,10 @@
 [ $UID != 0 ] && echo -e "$redfont You need admin priveleges to execute this script $resetfont"
 # Finding / Not a Finding prompts
 FINDING () {
-echo -e "RESULTS: $vulid - $redfont This is a finding $resetfont"
+echo -e "RESULTS: $vulid - $redfont This is a finding $resetfont \n"
 }
 NOTAFINDING () {
-echo -e "RESULTS: $vulid - $greenfont This is NOT a finding $resetfont"
+echo -e "RESULTS: $vulid - $greenfont This is NOT a finding $resetfont \n"
 }
 ### LABELS ###
 HEADER=`echo -e "\n#################################################\n"`
@@ -57,7 +57,7 @@ if [ -n "$CHECK" ]; then
   a system file or command, or a system file, has permissions less restrictive than the\
   default.\n\n $redfont $CHECK $resetfont \n
   $FIX_TEXT Run the following command to determine which package owns the file:\n
-  \t\t# rpm -qf $redfont<filename>$resetfont\n
+  \t\t# rpm -qf $redfont<filename>$resetfont \n
 
   Reset the permissions of files within a package with the following command:\n
 
@@ -73,411 +73,228 @@ fi
 
 RHEL-07-010020 () {
 vulid=V-71855
-$GROUP_TITLE SRG-OS-000480-GPOS-00227
-$RULE_ID SV-86479r2_rule
-$SEVERITY CAT I
-$RULE_VERSION RHEL-07-010020
-$RULE_TITLE The cryptographic hash of system files and commands must match vendor values.
-
-
-$VULNERABILITY_DISCUSSION Without cryptographic integrity protections, system command and files can be altered by unauthorized users without detection.
-
-Cryptographic mechanisms used for protecting the integrity of information include, for example, signed hash functions using asymmetric cryptography enabling distribution of the public key to verify the hash information while maintaining the confidentiality of the key used to generate the hash.
-
-
+echo -e "
+$HEADER
+$GROUP_TITLE SRG-OS-000480-GPOS-00227\n
+$RULE_ID SV-86479r2_rule\n
+$SEVERITY CAT I\n
+$RULE_VERSION RHEL-07-010020\n
+$RULE_TITLE The cryptographic hash of system files and commands must match vendor values.\n\n
+$VULNERABILITY_DISCUSSION Without cryptographic integrity protections, system command and \
+files can be altered by unauthorized users without detection.\n
+Cryptographic mechanisms used for protecting the integrity of information include, for \
+example, signed hash functions using asymmetric cryptography enabling distribution of the \
+public key to verify the hash information while maintaining the confidentiality of the key \
+used to generate the hash.\n\n
 $CHECK_CONTENT 
-Verify the cryptographic hash of system files and commands match the vendor values.
+Verify the cryptographic hash of system files and commands match the vendor values.\n
+Check the cryptographic hash of system files and commands with the following command:\n
+Note: System configuration files (indicated by a $redfont \"c\" $resetfont in the second column) are expected \
+to change over time. Unusual modifications should be investigated through the system audit log.\n
+\t\t# rpm -Va | grep '^..5'\n\n"
 
-Check the cryptographic hash of system files and commands with the following command:
+CHECK=`rpm -Va|grep '^..5'|awk -F " " '$2 != "c"'`
 
-Note: System configuration files (indicated by a "c" in the second column) are expected to change over time. Unusual modifications should be investigated through the system audit log.
+if [ -n "$CHECK" ]; then
+  FINDING
+  echo -e "There are output from the command for system binaries, this is a finding.\n\n
+  $redfont $CHECK $resetfont \n
+  $FIX_TEXT After verifying that the result is not a false positive.\
+  Run the following command to determine which package owns the file:\n\n
+  \t\t# rpm -qf $redfont <filename> $resetfont \n\n
+  The package can be reinstalled from a yum repository using the command:\n\n
+  \t\t# yum reinstall $redfont <packagename> $resetfont \n\n
+  Alternatively, the package can be reinstalled from trusted media using the command:
+  \t\t# sudo rpm -Uvh $redfont <packagename> $resetfont \n\n"
+else 
+  NOTAFINDING
+fi
+}
+RHEL-07-010030 () {
+vulid=V-71859
+echo -e " 
+$HEADER
+$GROUP_TITLE SRG-OS-000023-GPOS-00006\n
+$RULE_ID SV-86483r2_rule\n
+$SEVERITY CAT II\n
+$RULE_VERSION RHEL-07-010030, RHEL-07-010040\n
+$RULE_TITLE The operating system must display the Standard Mandatory DoD Notice and \
+Consent Banner before granting local or remote access to the system via a graphical user logon.\n\n
+$VULNERABILITY_DISCUSSION Display of a standardized and approved use notification before \
+granting access to the operating system ensures privacy and security notification verbiage \
+used is consistent with applicable federal laws, Executive Orders, directives, policies, \
+regulations, standards, and guidance.\n
+System use notifications are required only for access via logon interfaces with human users \
+and are not required when such human interfaces do not exist.\n\n
+The banner must be formatted in accordance with applicable DoD policy. Use the following \
+verbiage for operating systems that can accommodate banners of 1300 characters:\n\n"
 
-# rpm -Va | grep '^..5'
+banner="You are accessing a U.S. Government (USG) Information System (IS) that is provided \
+for USG-authorized use only.
+By using this IS (which includes any device attached to this IS), you consent to the \
+following conditions:
+\t\t-The USG routinely intercepts and monitors communications on this IS for purposes \
+including, but not limited to, penetration testing, COMSEC monitoring, network \
+operations and defense, personnel misconduct (PM), law enforcement (LE), and \
+counterintelligence (CI) investigations.
+\t\t-At any time, the USG may inspect and seize data stored on this IS.
+\t\t-Communications using, or data stored on, this IS are not private, are subject to \
+routine monitoring, interception, and search, and may be disclosed or used for any \
+USG-authorized purpose.
+\t\t-This IS includes security measures (e.g., authentication and access controls) \
+to protect USG interests--not for your personal benefit or privacy.
+\t\t-Notwithstanding the above, using this IS does not constitute consent to PM, LE or \
+CI investigative searching or monitoring of the content of privileged communications, \
+or work product, related to personal representation or services by attorneys, \
+psychotherapists, or clergy, and their assistants. Such communications and work product \
+are private and confidential. See User Agreement for details.\n"
 
-If there is any output from the command for system binaries, this is a finding.
+echo -e "$greenfont $banner $resetfont"
 
-$FIX_TEXT Run the following command to determine which package owns the file:
+echo -e "Use the following verbiage for operating systems that have severe limitations on the \
+number of characters that can be displayed in the banner:\n\n"
+alt_banner="\t\tI've read & consent to terms in IS user agreem't.\n\n"
+echo -e "$greenfont $alt_banner $resetfont
+$SATISFIES SRG-OS-000023-GPOS-00006, SRG-OS-000024-GPOS-00007, SRG-OS-000228-GPOS-00088 \n\n
+$CHECK_CONTENT\n
+Verify the operating system displays the Standard Mandatory DoD Notice and Consent Banner \
+before granting access to the operating system via a graphical user logon.\n
+\tNote: If the system does not have GNOME installed, this requirement is Not Applicable.\n\n
+Check to see if the operating system displays a banner at the logon screen with the following command:\n\n
+\t\t# grep banner-message-enable $redfont /etc/dconf/db/local.d/* $resetfont \n
+\t\t\tbanner-message-enable=\"$greenfont true $resetfont\" \n"
+GNOME_CHECK=`rpm -qa|grep gnome-desktop`
+if [ -n $GNOME_CHECK ]; then
 
-# rpm -qf <filename>
-
-The package can be reinstalled from a yum repository using the command:
-
-# sudo yum reinstall <packagename>
-
-Alternatively, the package can be reinstalled from trusted media using the command:
-
-# sudo rpm -Uvh <packagename>  
-
-CCI: CCI-000663
+  CHECK=`grep -iR -I -e 'banner-message-enable=true' /etc/dconf/|awk -F ":" '{print $1}'`
+  if [ -z "$CHECK" ]; then 
+    FINDING $(grep -iR -I -e 'banner-message-enable=true' /etc/dconf/)
+    echo -e "If $yellowfont \"banner-message-enable\" $resetfont is set to $redfont \"false\" $resetfont \
+    or is missing, this is a finding.\n\n
+    $FIX_TEXT Configure the operating system to display the Standard Mandatory DoD Notice and \
+    Consent Banner before granting access to the system.\n
+    Note: If the system does not have GNOME installed, this requirement is Not Applicable.\n\n
+    Create a database to contain the system-wide graphical user logon settings \
+    (if it does not already exist) with the following command:\n\n
+    \t\t\# vim \/etc\/dconf\/db\/local.d\/01-banner-message\n\n
+    Add the following lines:\n\n
+    \[org\/gnome\/login-screen\]
+    banner-message-enable\=true
+    $banner"
+  else 
+    NOTAFINDING 
+    echo -e "$greenfont $(grep -iR -I -e 'banner-message-enable=true' /etc/dconf) $resetfont"
+  fi
+else
+  NOTAFINDING
+  echo -e "gnome-desktop is not installed"
+fi
 }
 
-
-
-
-
-
-
-
-
-
-
-UNCLASSIFIED
- 
-
-Red Hat Enterprise Linux 7 Security Technical Implementation Guide
-
-Version: 1
-
-Release: 1
-
-27 Feb 2017
-
-
-
-
-
-XSL Release 1/29/2015     Sort by:   STIGID
-Description: This Security Technical Implementation Guide is published as a tool to improve the security of Department of Defense (DoD) information systems. The requirements are derived from the National Institute of Standards and Technology (NIST) 800-53 and related documents. Comments or proposed revisions to this document should be sent via email to the following address: disa.stig_spt@mail.mil.
-
-_____________________________________________________________
-vulid=V-71849
-$GROUP_TITLE SRG-OS-000257-GPOS-00098
-$RULE_ID SV-86473r2_rule
-$SEVERITY CAT I
-$RULE_VERSION RHEL-07-010010
-$RULE_TITLE The file permissions, ownership, and group membership of system files and commands must match the vendor values.
-
-
-$VULNERABILITY_DISCUSSION Discretionary access control is weakened if a user or group has access permissions to system files and directories greater than the default.
-
-$SATISFIES SRG-OS-000257-GPOS-00098, SRG-OS-000278-GPOS-00108
-
-
-$CHECK_CONTENT 
-Verify the file permissions, ownership, and group membership of system files and commands match the vendor values.
-
-Check the file permissions, ownership, and group membership of system files and commands with the following command:
-
-# rpm -Va | grep '^.M'
-
-If there is any output from the command indicating that the ownership or group of a system file or command, or a system file, has permissions less restrictive than the default, this is a finding.
-
-$FIX_TEXT Run the following command to determine which package owns the file:
-
-# rpm -qf <filename>
-
-Reset the permissions of files within a package with the following command:
-
-#rpm --setperms <packagename>
-
-Reset the user and group ownership of files within a package with the following command:
-
-#rpm --setugids <packagename>  
-
-CCI: CCI-001494
-
-
-CCI: CCI-001496
-_____________________________________________________________
-
-vulid=V-71855
-$GROUP_TITLE SRG-OS-000480-GPOS-00227
-$RULE_ID SV-86479r2_rule
-$SEVERITY CAT I
-$RULE_VERSION RHEL-07-010020
-$RULE_TITLE The cryptographic hash of system files and commands must match vendor values.
-
-
-$VULNERABILITY_DISCUSSION Without cryptographic integrity protections, system command and files can be altered by unauthorized users without detection.
-
-Cryptographic mechanisms used for protecting the integrity of information include, for example, signed hash functions using asymmetric cryptography enabling distribution of the public key to verify the hash information while maintaining the confidentiality of the key used to generate the hash.
-
-
-$CHECK_CONTENT 
-Verify the cryptographic hash of system files and commands match the vendor values.
-
-Check the cryptographic hash of system files and commands with the following command:
-
-Note: System configuration files (indicated by a "c" in the second column) are expected to change over time. Unusual modifications should be investigated through the system audit log.
-
-# rpm -Va | grep '^..5'
-
-If there is any output from the command for system binaries, this is a finding.
-
-$FIX_TEXT Run the following command to determine which package owns the file:
-
-# rpm -qf <filename>
-
-The package can be reinstalled from a yum repository using the command:
-
-# sudo yum reinstall <packagename>
-
-Alternatively, the package can be reinstalled from trusted media using the command:
-
-# sudo rpm -Uvh <packagename>  
-
-CCI: CCI-000663
-_____________________________________________________________
-
-vulid=V-71859
-$GROUP_TITLE SRG-OS-000023-GPOS-00006
-$RULE_ID SV-86483r2_rule
-$SEVERITY CAT II
-$RULE_VERSION RHEL-07-010030
-$RULE_TITLE The operating system must display the Standard Mandatory DoD Notice and Consent Banner before granting local or remote access to the system via a graphical user logon.
-
-
-$VULNERABILITY_DISCUSSION Display of a standardized and approved use notification before granting access to the operating system ensures privacy and security notification verbiage used is consistent with applicable federal laws, Executive Orders, directives, policies, regulations, standards, and guidance.
-
-System use notifications are required only for access via logon interfaces with human users and are not required when such human interfaces do not exist.
-
-The banner must be formatted in accordance with applicable DoD policy. Use the following verbiage for operating systems that can accommodate banners of 1300 characters:
-
-"You are accessing a U.S. Government (USG) Information System (IS) that is provided for USG-authorized use only.
-
-By using this IS (which includes any device attached to this IS), you consent to the following conditions:
-
--The USG routinely intercepts and monitors communications on this IS for purposes including, but not limited to, penetration testing, COMSEC monitoring, network operations and defense, personnel misconduct (PM), law enforcement (LE), and counterintelligence (CI) investigations.
-
--At any time, the USG may inspect and seize data stored on this IS.
-
--Communications using, or data stored on, this IS are not private, are subject to routine monitoring, interception, and search, and may be disclosed or used for any USG-authorized purpose.
-
--This IS includes security measures (e.g., authentication and access controls) to protect USG interests--not for your personal benefit or privacy.
-
--Notwithstanding the above, using this IS does not constitute consent to PM, LE or CI investigative searching or monitoring of the content of privileged communications, or work product, related to personal representation or services by attorneys, psychotherapists, or clergy, and their assistants. Such communications and work product are private and confidential. See User Agreement for details."
-
-Use the following verbiage for operating systems that have severe limitations on the number of characters that can be displayed in the banner:
-
-"I've read & consent to terms in IS user agreem't."
-
-$SATISFIES SRG-OS-000023-GPOS-00006, SRG-OS-000024-GPOS-00007, SRG-OS-000228-GPOS-00088
-
-
-$CHECK_CONTENT 
-Verify the operating system displays the Standard Mandatory DoD Notice and Consent Banner before granting access to the operating system via a graphical user logon.
-
-Note: If the system does not have GNOME installed, this requirement is Not Applicable.
-
-Check to see if the operating system displays a banner at the logon screen with the following command:
-
-# grep banner-message-enable /etc/dconf/db/local.d/*
-banner-message-enable=true
-
-If "banner-message-enable" is set to "false" or is missing, this is a finding.
-
-$FIX_TEXT Configure the operating system to display the Standard Mandatory DoD Notice and Consent Banner before granting access to the system.
-
-Note: If the system does not have GNOME installed, this requirement is Not Applicable.
-
-Create a database to contain the system-wide graphical user logon settings (if it does not already exist) with the following command:
-
-# touch /etc/dconf/db/local.d/01-banner-message
-
-Add the following line to the [org/gnome/login-screen] section of the "/etc/dconf/db/local.d/01-banner-message":
-
-[org/gnome/login-screen]
-banner-message-enable=true  
-
-CCI: CCI-000048
-_____________________________________________________________
-
-vulid=V-71861
-$GROUP_TITLE SRG-OS-000023-GPOS-00006
-$RULE_ID SV-86485r2_rule
-$SEVERITY CAT II
-$RULE_VERSION RHEL-07-010040
-$RULE_TITLE The operating system must display the approved Standard Mandatory DoD Notice and Consent Banner before granting local or remote access to the system via a graphical user logon.
-
-
-$VULNERABILITY_DISCUSSION Display of a standardized and approved use notification before granting access to the operating system ensures privacy and security notification verbiage used is consistent with applicable federal laws, Executive Orders, directives, policies, regulations, standards, and guidance.
-
-System use notifications are required only for access via logon interfaces with human users and are not required when such human interfaces do not exist.
-
-The banner must be formatted in accordance with applicable DoD policy. Use the following verbiage for operating systems that can accommodate banners of 1300 characters:
-
-"You are accessing a U.S. Government (USG) Information System (IS) that is provided for USG-authorized use only.
-
-By using this IS (which includes any device attached to this IS), you consent to the following conditions:
-
--The USG routinely intercepts and monitors communications on this IS for purposes including, but not limited to, penetration testing, COMSEC monitoring, network operations and defense, personnel misconduct (PM), law enforcement (LE), and counterintelligence (CI) investigations.
-
--At any time, the USG may inspect and seize data stored on this IS.
-
--Communications using, or data stored on, this IS are not private, are subject to routine monitoring, interception, and search, and may be disclosed or used for any USG-authorized purpose.
-
--This IS includes security measures (e.g., authentication and access controls) to protect USG interests--not for your personal benefit or privacy.
-
--Notwithstanding the above, using this IS does not constitute consent to PM, LE or CI investigative searching or monitoring of the content of privileged communications, or work product, related to personal representation or services by attorneys, psychotherapists, or clergy, and their assistants. Such communications and work product are private and confidential. See User Agreement for details."
-
-Use the following verbiage for operating systems that have severe limitations on the number of characters that can be displayed in the banner:
-
-"I've read & consent to terms in IS user agreem't."
-
-$SATISFIES SRG-OS-000023-GPOS-00006, SRG-OS-000024-GPOS-00007, SRG-OS-000228-GPOS-00088
-
-
-$CHECK_CONTENT 
-Verify the operating system displays the approved Standard Mandatory DoD Notice and Consent Banner before granting access to the operating system via a graphical user logon.
-
-Note: If the system does not have GNOME installed, this requirement is Not Applicable.
-
-Check that the operating system displays the exact approved Standard Mandatory DoD Notice and Consent Banner text with the command:
-
-# grep banner-message-text /etc/dconf/db/local.d/*
-banner-message-text=
-‘You are accessing a U.S. Government (USG) Information System (IS) that is provided for USG-authorized use only.
-
-By using this IS (which includes any device attached to this IS), you consent to the following conditions:
-
--The USG routinely intercepts and monitors communications on this IS for purposes including, but not limited to, penetration testing, COMSEC monitoring, network operations and defense, personnel misconduct (PM), law enforcement (LE), and counterintelligence (CI) investigations.
-
--At any time, the USG may inspect and seize data stored on this IS.
-
--Communications using, or data stored on, this IS are not private, are subject to routine monitoring, interception, and search, and may be disclosed or used for any USG-authorized purpose.
-
--This IS includes security measures (e.g., authentication and access controls) to protect USG interests--not for your personal benefit or privacy.
-
--Notwithstanding the above, using this IS does not constitute consent to PM, LE or CI investigative searching or monitoring of the content of privileged communications, or work product, related to personal representation or services by attorneys, psychotherapists, or clergy, and their assistants. Such communications and work product are private and confidential. See User Agreement for details.’
-
-If the banner does not match the approved Standard Mandatory DoD Notice and Consent Banner, this is a finding.
-
-$FIX_TEXT Configure the operating system to display the approved Standard Mandatory DoD Notice and Consent Banner before granting access to the system.
-
-Note: If the system does not have GNOME installed, this requirement is Not Applicable.
-
-Create a database to contain the system-wide graphical user logon settings (if it does not already exist) with the following command:
-
-# touch /etc/dconf/db/local.d/01-banner-message
-
-Add the following line to the [org/gnome/login-screen] section of the "/etc/dconf/db/local.d/01-banner-message":
-
-[org/gnome/login-screen]
-banner-message-text=’You are accessing a U.S. Government (USG) Information System (IS) that is provided for USG-authorized use only.
-
-By using this IS (which includes any device attached to this IS), you consent to the following conditions:
-
--The USG routinely intercepts and monitors communications on this IS for purposes including, but not limited to, penetration testing, COMSEC monitoring, network operations and defense, personnel misconduct (PM), law enforcement (LE), and counterintelligence (CI) investigations.
-
--At any time, the USG may inspect and seize data stored on this IS.
-
--Communications using, or data stored on, this IS are not private, are subject to routine monitoring, interception, and search, and may be disclosed or used for any USG-authorized purpose.
-
--This IS includes security measures (e.g., authentication and access controls) to protect USG interests--not for your personal benefit or privacy.
-
--Notwithstanding the above, using this IS does not constitute consent to PM, LE or CI investigative searching or monitoring of the content of privileged communications, or work product, related to personal representation or services by attorneys, psychotherapists, or clergy, and their assistants. Such communications and work product are private and confidential. See User Agreement for details.’  
-
-CCI: CCI-000048
-_____________________________________________________________
-
+RHEL-07-010050 () {
 vulid=V-71863
+echo -e "
+$HEADER
 $GROUP_TITLE SRG-OS-000023-GPOS-00006
 $RULE_ID SV-86487r1_rule
 $SEVERITY CAT II
 $RULE_VERSION RHEL-07-010050
-$RULE_TITLE The operating system must display the Standard Mandatory DoD Notice and Consent Banner before granting local or remote access to the system via a command line user logon.
+$RULE_TITLE The operating system must display the Standard Mandatory DoD Notice and Consent \
+Banner before granting local or remote access to the system via a command line user logon.\n
+$VULNERABILITY_DISCUSSION Display of a standardized and approved use notification before \
+granting access to the operating system ensures privacy and security notification verbiage \
+used is consistent with applicable federal laws, Executive Orders, directives, policies, \
+regulations, standards, and guidance.\n
+System use notifications are required only for access via logon interfaces with human \
+users and are not required when such human interfaces do not exist.\n
+The banner must be formatted in accordance with applicable DoD policy. Use the following \
+verbiage for operating systems that can accommodate banners of 1300 characters:\n"
 
+BANNER="You are accessing a U.S. Government (USG) Information System \
+(IS) that is provided for USG-authorized use only.\n
+By using this IS (which includes any device attached to this IS), you consent to the \
+following conditions:\n
+\t\t-The USG routinely intercepts and monitors communications on this IS for purposes \
+including, but not limited to, penetration testing, COMSEC monitoring, network \
+operations and defense, personnel misconduct (PM), law enforcement (LE), and \
+counterintelligence (CI) investigations.\n
+\t\t-At any time, the USG may inspect and seize data stored on this IS.\n
+\t\t-Communications using, or data stored on, this IS are not private, are subject to \
+routine monitoring, interception, and search, and may be disclosed or used for any \
+USG-authorized purpose.\n
+\t\t-This IS includes security measures (e.g., authentication and access controls) to \
+protect USG interests--not for your personal benefit or privacy.\n
+\t\t-Notwithstanding the above, using this IS does not constitute consent to PM, LE or \
+CI investigative searching or monitoring of the content of privileged communications, or \
+work product, related to personal representation or services by attorneys, psychotherapists, \
+or clergy, and their assistants. Such communications and work product are private and confidential. \
+See User Agreement for details.\n\n"
 
-$VULNERABILITY_DISCUSSION Display of a standardized and approved use notification before granting access to the operating system ensures privacy and security notification verbiage used is consistent with applicable federal laws, Executive Orders, directives, policies, regulations, standards, and guidance.
+alt_BANNER=`echo -e "$greenfont \t\t\"I've read & consent to terms in IS user agreem't.\"\n $resetfont"`
 
-System use notifications are required only for access via logon interfaces with human users and are not required when such human interfaces do not exist.
+echo -e $greenfont $BANNER $resetfont
 
-The banner must be formatted in accordance with applicable DoD policy. Use the following verbiage for operating systems that can accommodate banners of 1300 characters:
+echo -e "Use the following verbiage for operating systems that have severe limitations on the \
+number of characters that can be displayed in the banner:\n
 
-"You are accessing a U.S. Government (USG) Information System (IS) that is provided for USG-authorized use only.
-
-By using this IS (which includes any device attached to this IS), you consent to the following conditions:
-
--The USG routinely intercepts and monitors communications on this IS for purposes including, but not limited to, penetration testing, COMSEC monitoring, network operations and defense, personnel misconduct (PM), law enforcement (LE), and counterintelligence (CI) investigations.
-
--At any time, the USG may inspect and seize data stored on this IS.
-
--Communications using, or data stored on, this IS are not private, are subject to routine monitoring, interception, and search, and may be disclosed or used for any USG-authorized purpose.
-
--This IS includes security measures (e.g., authentication and access controls) to protect USG interests--not for your personal benefit or privacy.
-
--Notwithstanding the above, using this IS does not constitute consent to PM, LE or CI investigative searching or monitoring of the content of privileged communications, or work product, related to personal representation or services by attorneys, psychotherapists, or clergy, and their assistants. Such communications and work product are private and confidential. See User Agreement for details."
-
-Use the following verbiage for operating systems that have severe limitations on the number of characters that can be displayed in the banner:
-
-"I've read & consent to terms in IS user agreem't."
+$alt_BANNER
 
 $SATISFIES SRG-OS-000023-GPOS-00006, SRG-OS-000024-GPOS-00007
 
-
 $CHECK_CONTENT 
-Verify the operating system displays the Standard Mandatory DoD Notice and Consent Banner before granting access to the operating system via a command line user logon.
+Verify the operating system displays the Standard Mandatory DoD Notice and Consent Banner \
+before granting access to the operating system via a command line user logon.\n
+Check to see if the operating system displays a banner at the command line logon screen \
+with the following command:\n
+$greenfont \t\t # more /etc/issue $resetfont \n\n"
+CHECK=`cat /etc/issue`
+if [ -z "$CHECK" ]; then
+  FINDING
+  echo -e "The operating system does not display a graphical logon banner or the banner\
+  does not match the Standard Mandatory DoD Notice and Consent Banner, this is a finding.\n
+  $FIX_TEXT Configure the operating system to display the Standard Mandatory DoD Notice \
+  and Consent Banner before granting access to the system via the command line by editing \
+  the \"/etc/issue\" file.\n
+  Replace the default text with the Standard Mandatory DoD Notice and Consent Banner. \
+  The DoD required text is:\n
+  $BANNER"
+else
+  NOTAFINDING
+  echo -e "Make sure that the verbiage reads as follows, otherwise, this is a false negative:\n
+  $bluefont DoD Banner: $resetfont
+  $greenfont $BANNER $resetfont
+  $redfont Original verbiage: $resetfont
+  $yellowfont $CHECK $resetfont"
+fi
+}
 
-Check to see if the operating system displays a banner at the command line logon screen with the following command:
-
-# more /etc/issue
-
-The command should return the following text:
-"You are accessing a U.S. Government (USG) Information System (IS) that is provided for USG-authorized use only.
-
-By using this IS (which includes any device attached to this IS), you consent to the following conditions:
-
--The USG routinely intercepts and monitors communications on this IS for purposes including, but not limited to, penetration testing, COMSEC monitoring, network operations and defense, personnel misconduct (PM), law enforcement (LE), and counterintelligence (CI) investigations.
-
--At any time, the USG may inspect and seize data stored on this IS.
-
--Communications using, or data stored on, this IS are not private, are subject to routine monitoring, interception, and search, and may be disclosed or used for any USG-authorized purpose.
-
--This IS includes security measures (e.g., authentication and access controls) to protect USG interests--not for your personal benefit or privacy.
-
--Notwithstanding the above, using this IS does not constitute consent to PM, LE or CI investigative searching or monitoring of the content of privileged communications, or work product, related to personal representation or services by attorneys, psychotherapists, or clergy, and their assistants. Such communications and work product are private and confidential. See User Agreement for details."
-
-If the operating system does not display a graphical logon banner or the banner does not match the Standard Mandatory DoD Notice and Consent Banner, this is a finding.
-
-If the text in the "/etc/issue" file does not match the Standard Mandatory DoD Notice and Consent Banner, this is a finding.
-
-$FIX_TEXT Configure the operating system to display the Standard Mandatory DoD Notice and Consent Banner before granting access to the system via the command line by editing the "/etc/issue" file.
-
-Replace the default text with the Standard Mandatory DoD Notice and Consent Banner. The DoD required text is:
-
-"You are accessing a U.S. Government (USG) Information System (IS) that is provided for USG-authorized use only.
-
-By using this IS (which includes any device attached to this IS), you consent to the following conditions:
-
--The USG routinely intercepts and monitors communications on this IS for purposes including, but not limited to, penetration testing, COMSEC monitoring, network operations and defense, personnel misconduct (PM), law enforcement (LE), and counterintelligence (CI) investigations.
-
--At any time, the USG may inspect and seize data stored on this IS.
-
--Communications using, or data stored on, this IS are not private, are subject to routine monitoring, interception, and search, and may be disclosed or used for any USG-authorized purpose.
-
--This IS includes security measures (e.g., authentication and access controls) to protect USG interests -- not for your personal benefit or privacy.
-
--Notwithstanding the above, using this IS does not constitute consent to PM, LE or CI investigative searching or monitoring of the content of privileged communications, or work product, related to personal representation or services by attorneys, psychotherapists, or clergy, and their assistants. Such communications and work product are private and confidential. See User Agreement for details."  
-
-CCI: CCI-000048
-_____________________________________________________________
-
+RHEL-07-010060() {
 vulid=V-71891
-$GROUP_TITLE SRG-OS-000028-GPOS-00009
-$RULE_ID SV-86515r2_rule
-$SEVERITY CAT II
-$RULE_VERSION RHEL-07-010060
-$RULE_TITLE The operating system must enable a user session lock until that user re-establishes access using established identification and authentication procedures.
-
-
-$VULNERABILITY_DISCUSSION A session lock is a temporary action taken when a user stops work and moves away from the immediate physical vicinity of the information system but does not want to log out because of the temporary nature of the absence.
-
-The session lock is implemented at the point where session activity can be determined.
-
-Regardless of where the session lock is determined and implemented, once invoked, the session lock must remain in place until the user reauthenticates. No other activity aside from reauthentication must unlock the system.
-
-$SATISFIES SRG-OS-000028-GPOS-00009, SRG-OS-000030-GPOS-00011
-
-
+echo -e "
+$HEADER
+$GROUP_TITLE SRG-OS-000028-GPOS-00009\n
+$RULE_ID SV-86515r2_rule\n
+$SEVERITY CAT II\n
+$RULE_VERSION RHEL-07-010060\n
+$RULE_TITLE The operating system must enable a user session lock until that user re-establishes \
+access using established identification and authentication procedures.\n
+$VULNERABILITY_DISCUSSION A session lock is a temporary action taken when a user stops work and \
+moves away from the immediate physical vicinity of the information system but does not want to \
+log out because of the temporary nature of the absence.\n
+The session lock is implemented at the point where session activity can be determined.\n
+Regardless of where the session lock is determined and implemented, once invoked, the session \
+lock must remain in place until the user reauthenticates. No other activity aside from \
+reauthentication must unlock the system.\n
+$SATISFIES SRG-OS-000028-GPOS-00009, SRG-OS-000030-GPOS-00011\n
 $CHECK_CONTENT 
-Verify the operating system enables a user's session lock until that user re-establishes access using established identification and authentication procedures. The screen program must be installed to lock sessions on the console.
-
-Note: If the system does not have GNOME installed, this requirement is Not Applicable.
-
-Check to see if the screen lock is enabled with the following command:
-
-# grep -i lock-enabled /etc/dconf/db/local.d/00-screensaver
-lock-enabled=true
+Verify the operating system enables a user's session lock until that user re-establishes access \
+using established identification and authentication procedures. The screen program must be \
+installed to lock sessions on the console.\n
+$yellowfont Note: If the system does not have GNOME installed, this requirement is \
+Not Applicable. $resetfont \n
+Check to see if the screen lock is enabled with the following command:\n
+\t\t $greenfont # grep -i lock-enabled /etc/dconf/db/local.d/00-screensaver\n
+\t\t\t lock-enabled=true $resetfont"
 
 If the "lock-enabled" setting is missing or is not set to "true", this is a finding.
 
@@ -515,7 +332,7 @@ Update the system databases:
 Users must log out and back in again before the system-wide settings take effect.  
 
 CCI: CCI-000056
-_____________________________________________________________
+}
 
 vulid=V-71893
 $GROUP_TITLE SRG-OS-000029-GPOS-00010
