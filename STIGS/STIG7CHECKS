@@ -10,10 +10,10 @@
 [ $UID != 0 ] && echo -e "$redfont You need admin priveleges to execute this script $resetfont"
 # Finding / Not a Finding prompts
 FINDING () {
-echo -e "RESULTS: $vulid - $redfont This is a finding $resetfont \n"
+echo -e "$bluefont RESULTS: $lyellowfont $vulid - $redfont This is a finding $resetfont \n"
 }
 NOTAFINDING () {
-echo -e "RESULTS: $vulid - $greenfont This is NOT a finding $resetfont \n"
+echo -e "$bluefont RESULTS: $lyellowfont $vulid - $greenfont This is NOT a finding $resetfont \n"
 }
 ### LABELS ###
 HEADER=`echo -e "\n#################################################\n"`
@@ -44,11 +44,10 @@ $SATISFIES SRG-OS-000257-GPOS-00098, SRG-OS-000278-GPOS-00108\n
 $CHECK_CONTENT 
 Verify the file permissions, ownership, and group membership of system files and \
 commands match the vendor values.\n
-
 Check the file permissions, ownership, and group membership of system files and commands \
 with the following command:\n
 
-# rpm -Va | grep '^.M' \n\n"
+$cyanfont # rpm -Va | grep '^.M' \n\n $resetfont"
 CHECK=`rpm -Va|grep '^.M'|awk -F " " '{print $2}'`
 
 if [ -n "$CHECK" ]; then
@@ -57,15 +56,15 @@ if [ -n "$CHECK" ]; then
   a system file or command, or a system file, has permissions less restrictive than the\
   default.\n\n $redfont $CHECK $resetfont \n
   $FIX_TEXT Run the following command to determine which package owns the file:\n
-  \t\t# rpm -qf $redfont<filename>$resetfont \n
+  \t $cyanfont # rpm -qf $magentafont <filename> $resetfont \n
 
   Reset the permissions of files within a package with the following command:\n
 
-  \t\t# rpm --setperms $redfont<packagename>$resetfont\n
+  \t $cyanfont # rpm --setperms $magentafont <packagename> $resetfont\n
 
   Reset the user and group ownership of files within a package with the following command:\n
 
-  \t\t# rpm --setugids $redfont<packagename>$resetfont\n"
+  \t $cyanfont # rpm --setugids $magentafont <packagename> $resetfont\n"
 else
   NOTAFINDING
 fi
@@ -89,9 +88,9 @@ used to generate the hash.\n\n
 $CHECK_CONTENT 
 Verify the cryptographic hash of system files and commands match the vendor values.\n
 Check the cryptographic hash of system files and commands with the following command:\n
-Note: System configuration files (indicated by a $redfont \"c\" $resetfont in the second column) are expected \
+Note: System configuration files (indicated by a $yellowfont \"c\" $resetfont in the second column) are expected \
 to change over time. Unusual modifications should be investigated through the system audit log.\n
-\t\t# rpm -Va | grep '^..5'\n\n"
+\t $cyanfont # rpm -Va | grep '^..5' $resetfont \n\n"
 
 CHECK=`rpm -Va|grep '^..5'|awk -F " " '$2 != "c"'`
 
@@ -101,11 +100,11 @@ if [ -n "$CHECK" ]; then
   $redfont $CHECK $resetfont \n
   $FIX_TEXT After verifying that the result is not a false positive.\
   Run the following command to determine which package owns the file:\n\n
-  \t\t# rpm -qf $redfont <filename> $resetfont \n\n
+  \t $cyanfont # rpm -qf $magentafont <filename> $resetfont \n\n
   The package can be reinstalled from a yum repository using the command:\n\n
-  \t\t# yum reinstall $redfont <packagename> $resetfont \n\n
+  \t $cyanfont # yum reinstall $magentafont <packagename> $resetfont \n\n
   Alternatively, the package can be reinstalled from trusted media using the command:
-  \t\t# sudo rpm -Uvh $redfont <packagename> $resetfont \n\n"
+  \t $cyanfont # sudo rpm -Uvh $magentafont <packagename> $resetfont \n\n"
 else 
   NOTAFINDING
 fi
@@ -119,7 +118,8 @@ $RULE_ID SV-86483r2_rule\n
 $SEVERITY CAT II\n
 $RULE_VERSION RHEL-07-010030, RHEL-07-010040\n
 $RULE_TITLE The operating system must display the Standard Mandatory DoD Notice and \
-Consent Banner before granting local or remote access to the system via a graphical user logon.\n\n
+Consent Banner before granting local or remote access to the system via a graphical \
+user logon.\n\n
 $VULNERABILITY_DISCUSSION Display of a standardized and approved use notification before \
 granting access to the operating system ensures privacy and security notification verbiage \
 used is consistent with applicable federal laws, Executive Orders, directives, policies, \
@@ -133,17 +133,17 @@ banner="You are accessing a U.S. Government (USG) Information System (IS) that i
 for USG-authorized use only.
 By using this IS (which includes any device attached to this IS), you consent to the \
 following conditions:
-\t\t-The USG routinely intercepts and monitors communications on this IS for purposes \
+\t-The USG routinely intercepts and monitors communications on this IS for purposes \
 including, but not limited to, penetration testing, COMSEC monitoring, network \
 operations and defense, personnel misconduct (PM), law enforcement (LE), and \
 counterintelligence (CI) investigations.
-\t\t-At any time, the USG may inspect and seize data stored on this IS.
-\t\t-Communications using, or data stored on, this IS are not private, are subject to \
+\t-At any time, the USG may inspect and seize data stored on this IS.
+\t-Communications using, or data stored on, this IS are not private, are subject to \
 routine monitoring, interception, and search, and may be disclosed or used for any \
 USG-authorized purpose.
-\t\t-This IS includes security measures (e.g., authentication and access controls) \
+\t-This IS includes security measures (e.g., authentication and access controls) \
 to protect USG interests--not for your personal benefit or privacy.
-\t\t-Notwithstanding the above, using this IS does not constitute consent to PM, LE or \
+\t-Notwithstanding the above, using this IS does not constitute consent to PM, LE or \
 CI investigative searching or monitoring of the content of privileged communications, \
 or work product, related to personal representation or services by attorneys, \
 psychotherapists, or clergy, and their assistants. Such communications and work product \
@@ -153,7 +153,7 @@ echo -e "$greenfont $banner $resetfont"
 
 echo -e "Use the following verbiage for operating systems that have severe limitations on the \
 number of characters that can be displayed in the banner:\n\n"
-alt_banner="\t\tI've read & consent to terms in IS user agreem't.\n\n"
+alt_banner="\tI've read & consent to terms in IS user agreem't.\n\n"
 echo -e "$greenfont $alt_banner $resetfont
 $SATISFIES SRG-OS-000023-GPOS-00006, SRG-OS-000024-GPOS-00007, SRG-OS-000228-GPOS-00088 \n\n
 $CHECK_CONTENT\n
@@ -161,8 +161,8 @@ Verify the operating system displays the Standard Mandatory DoD Notice and Conse
 before granting access to the operating system via a graphical user logon.\n
 \tNote: If the system does not have GNOME installed, this requirement is Not Applicable.\n\n
 Check to see if the operating system displays a banner at the logon screen with the following command:\n\n
-\t\t# grep banner-message-enable $redfont /etc/dconf/db/local.d/* $resetfont \n
-\t\t\tbanner-message-enable=\"$greenfont true $resetfont\" \n"
+\t $cyanfont # grep $yellowfont banner-message-enable $magentafont /etc/dconf/db/local.d/* $resetfont \n
+\t\t $yellow banner-message-enable=\"$greenfont true $resetfont\" \n"
 GNOME_CHECK=`rpm -qa|grep gnome-desktop`
 if [ -n $GNOME_CHECK ]; then
 
@@ -176,18 +176,18 @@ if [ -n $GNOME_CHECK ]; then
     Note: If the system does not have GNOME installed, this requirement is Not Applicable.\n\n
     Create a database to contain the system-wide graphical user logon settings \
     (if it does not already exist) with the following command:\n\n
-    \t\t\# vim \/etc\/dconf\/db\/local.d\/01-banner-message\n\n
+    \t $cyanfont # vim $yellowfont \/etc\/dconf\/db\/local.d\/01-banner-message $resetfont\n\n
     Add the following lines:\n\n
-    \[org\/gnome\/login-screen\]
+    $magentafont \[org\/gnome\/login-screen\]
     banner-message-enable\=true
-    $banner"
+    $banner $resetfont"
   else 
     NOTAFINDING 
     echo -e "$greenfont $(grep -iR -I -e 'banner-message-enable=true' /etc/dconf) $resetfont"
   fi
 else
   NOTAFINDING
-  echo -e "gnome-desktop is not installed"
+  echo -e "$greenfont gnome-desktop is not installed $resetfont"
 fi
 }
 
@@ -214,30 +214,30 @@ BANNER="You are accessing a U.S. Government (USG) Information System \
 (IS) that is provided for USG-authorized use only.\n
 By using this IS (which includes any device attached to this IS), you consent to the \
 following conditions:\n
-\t\t-The USG routinely intercepts and monitors communications on this IS for purposes \
+\t-The USG routinely intercepts and monitors communications on this IS for purposes \
 including, but not limited to, penetration testing, COMSEC monitoring, network \
 operations and defense, personnel misconduct (PM), law enforcement (LE), and \
 counterintelligence (CI) investigations.\n
-\t\t-At any time, the USG may inspect and seize data stored on this IS.\n
-\t\t-Communications using, or data stored on, this IS are not private, are subject to \
+\t-At any time, the USG may inspect and seize data stored on this IS.\n
+\t-Communications using, or data stored on, this IS are not private, are subject to \
 routine monitoring, interception, and search, and may be disclosed or used for any \
 USG-authorized purpose.\n
-\t\t-This IS includes security measures (e.g., authentication and access controls) to \
+\t-This IS includes security measures (e.g., authentication and access controls) to \
 protect USG interests--not for your personal benefit or privacy.\n
-\t\t-Notwithstanding the above, using this IS does not constitute consent to PM, LE or \
+\t-Notwithstanding the above, using this IS does not constitute consent to PM, LE or \
 CI investigative searching or monitoring of the content of privileged communications, or \
 work product, related to personal representation or services by attorneys, psychotherapists, \
 or clergy, and their assistants. Such communications and work product are private and confidential. \
 See User Agreement for details.\n\n"
 
-alt_BANNER=`echo -e "$greenfont \t\t\"I've read & consent to terms in IS user agreem't.\"\n $resetfont"`
+alt_BANNER=`echo -e "$greenfont \t\"I've read & consent to terms in IS user agreem't.\"\n $resetfont"`
 
-echo -e $greenfont $BANNER $resetfont
+echo -e $magentafont $BANNER $resetfont
 
 echo -e "Use the following verbiage for operating systems that have severe limitations on the \
 number of characters that can be displayed in the banner:\n
 
-$alt_BANNER
+$magentafont $alt_BANNER $resetfont
 
 $SATISFIES SRG-OS-000023-GPOS-00006, SRG-OS-000024-GPOS-00007
 
@@ -246,7 +246,7 @@ Verify the operating system displays the Standard Mandatory DoD Notice and Conse
 before granting access to the operating system via a command line user logon.\n
 Check to see if the operating system displays a banner at the command line logon screen \
 with the following command:\n
-$greenfont \t\t # more /etc/issue $resetfont \n\n"
+\t\t $cyanfont # more $magentafont /etc/issue $resetfont \n\n"
 CHECK=`cat /etc/issue`
 if [ -z "$CHECK" ]; then
   FINDING
@@ -257,14 +257,14 @@ if [ -z "$CHECK" ]; then
   the \"/etc/issue\" file.\n
   Replace the default text with the Standard Mandatory DoD Notice and Consent Banner. \
   The DoD required text is:\n
-  $BANNER"
+  $magentafont $BANNER $resetfont"
 else
   NOTAFINDING
   echo -e "Make sure that the verbiage reads as follows, otherwise, this is a false negative:\n
-  $bluefont DoD Banner: $resetfont
-  $greenfont $BANNER $resetfont
-  $redfont Original verbiage: $resetfont
-  $yellowfont $CHECK $resetfont"
+  $yellowfont  DoD Banner: $resetfont
+  $magentafont $BANNER $resetfont
+  $yellowfont Original verbiage: $resetfont
+  $magentafont $CHECK $resetfont"
 fi
 }
 
@@ -291,23 +291,34 @@ Verify the operating system enables a user's session lock until that user re-est
 using established identification and authentication procedures. The screen program must be \
 installed to lock sessions on the console.\n
 $yellowfont Note: If the system does not have GNOME installed, this requirement is \
-Not Applicable. $resetfont \n
-Check to see if the screen lock is enabled with the following command:\n
-\t\t $greenfont # grep -i lock-enabled /etc/dconf/db/local.d/00-screensaver\n
-\t\t\t lock-enabled=true $resetfont"
+Not Applicable. $resetfont \n"
 
-If the "lock-enabled" setting is missing or is not set to "true", this is a finding.
+GNOME_CHECK=`rpm -qa|grep gnome-desktop`
+if [ -n $GNOME_CHECK ]; then
 
-$FIX_TEXT Configure the operating system to enable a user's session lock until that user re-establishes access using established identification and authentication procedures.
+  echo -e "GNOME Desktop is installed"
+  echo -e "Check to see if the screen lock is enabled with the following command:\n
+  \t\t $greenfont # grep -i lock-enabled /etc/dconf/db/local.d/00-screensaver\n
+  \t\t\t lock-enabled=true $resetfont"
 
-Create a database to contain the system-wide screensaver settings (if it does not already exist) with the following command:
+  CHECK=`grep -iR 'lock-enabled=true'/etc/dconf`
 
-# touch /etc/dconf/db/local.d/00-screensaver
-
-Edit “org/gnome/desktop/session” and add or update the following lines:
-
-# Set the lock time out to 900 seconds before the session is considered idle
-idle-delay=uint32 900
+  if [ -z "$CHECK" ]; then
+    FINDING $(CHECK)
+    echo -e "
+    If the $yellowfont \"lock-enabled\" $resetfont  setting is missing or is not set\
+    to $redfont \"true\" $resetfont, this is a finding.\n\n
+    $FIX_TEXT Configure the operating system to enable a user's session lock until\
+    that user re-establishes access using established identification and\
+    authentication procedures.\n\n
+    Create a database to contain the system-wide screensaver settings\
+    (if it does not already exist) with the following command:\n\n
+    $greenfont \t\t# touch /etc/dconf/db/local.d/00-screensaver \n\n $resetfont
+    Edit $greenfont \“org/gnome/desktop/session\” $resetfont and add or update the\
+    following lines:\n\n
+    # Set the lock time out to $redfont 900 $resetfont seconds before the session is\
+    considered idle
+    \t\tidle-delay=uint32 900
 
 Edit "org/gnome/desktop/screensaver" and add or update the following lines:
 
@@ -332,6 +343,14 @@ Update the system databases:
 Users must log out and back in again before the system-wide settings take effect.  
 
 CCI: CCI-000056
+  else
+    NOTAFINDING
+    echo -e "$greenfont $(grep -iR -I -e 'banner-message-enable=true' /etc/dconf) $resetfont"
+  fi
+else
+  NOTAFINDING
+  echo -e "gnome-desktop is not installed"
+fi
 }
 
 vulid=V-71893
