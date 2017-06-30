@@ -1,4 +1,9 @@
 #!/bin/bash
+[ 
+[ $UID -gt "0" ] && echo -e "YOU NEED ADMIN PRIVELEGES TO RUN THIS SCRIPT" && exit
+[ -z $@ ] && echo -e "YOU NEED TO SPECIFY THE URL YOU WANT TO DOWNLOAD FROM\n\t\t$0 http/s://name.of.the.website <target_directory>" && exit
+[ -z $2 ] && echo -e "YOU NEED TO SPECIFY A TARGET FOLDER\n\t\t$0 http/s://name.of.the.website <target_directory>" && exit
+[ ! "$1" =~ ^http ] && echo -e "I DON'T THINK THAT'S a URL\n\t\t$1" && exit
 
 dwnld () {
 
